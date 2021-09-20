@@ -1,7 +1,9 @@
 mod parser;
+mod error;
 
 use std::env;
 use std::path::Path;
+use std::io::Write;
 
 fn main() {
     let mut args = env::args().skip(1);
@@ -38,7 +40,7 @@ fn main() {
     	}
     };
 
-    out.write_all("fn main() {\n")
+    out.write_all(b"fn main() {\n");
     
     parser::parse_file(&mut inp, &mut out);
 }
