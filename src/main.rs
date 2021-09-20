@@ -29,6 +29,16 @@ fn main() {
             std::process::exit(1);
         }
     };
+
+    let mut out = match std::fs::File::create(Path::new(&out)) {
+    	Ok(v) => v,
+    	Err(_) => {
+    		println!("File with name '{}' cannot be created.", out);
+    		std::process::exit(1);
+    	}
+    };
+
+    out.write_all("fn main() {\n")
     
-    parser::parse_file(&mut inp, out.as_str());
+    parser::parse_file(&mut inp, &mut out);
 }
