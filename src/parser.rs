@@ -17,19 +17,21 @@ pub fn parse_file(file: &mut File, out: &mut File) {
         out.write_all(parse_expression(expr).as_bytes());
     }
 
-    out.write_all("\n}")
+    out.write_all(b"\n}");
 }
 
-fn parse_expression(expr: &str) -> &str {
+fn parse_expression(expr: &str) -> String {
 	let mut out = String::new();
 
 	// Get individual words
 	let mut expr = expr.split(' ');
-	// ToDo: Filter linker words 
-    match expr.next() { 
-        "print" => {
-        	out += format!("println!("{}")", );
-        	
+	// TODO: Filter linker words 
+    for word in expr {
+        match word { 
+            "print" => {},
+            _ => {}
         }
     }
+    
+    out
 }
