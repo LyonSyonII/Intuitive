@@ -1,6 +1,8 @@
 use std::io::*;
 use std::fs::File;
 use std::path::Path;
+use Chat::db;
+
 
 enum Instruction {
     Assign(String, String),
@@ -24,7 +26,8 @@ fn parse_expression(expr: &str) -> String {
 	let mut out = String::new();
 
 	// Get individual words
-	let mut expr = expr.split(' ');
+	let mut expr = expr.split(' ').filter(|&x| !db::IGNORE.contains(x));
+    
 	// TODO: Filter linker words 
     for word in expr {
         match word { 
