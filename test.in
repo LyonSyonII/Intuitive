@@ -4,12 +4,13 @@ A = 5.
 
 (Test: Assign primitive operations)
 A es igual a 5 més 5.
-A = 5 + 5.
 A es igual a 5 menys 5.
-A = 5 - 5.
 A es igual a 5 per 5.
-A = 5 * 5.
 A es igual a 5 entre 5.
+
+A = 5 + 5.
+A = 5 - 5.
+A = 5 * 5.
 A = 5 / 5.
 
 (Test: Assign variable-primitive operations)
@@ -19,12 +20,24 @@ B es igual a A menys 5.
 B es igual a A per 5.
 B es igual a A entre 5.
 
+B = A.
+B = A + 5.
+B = A - 5.
+B = A * 5.
+B = A / 5.
+
 (Test: Assign primitive-variable operations)
 B es igual a A.
-B es igual a A més 5.
-B es igual a A menys 5.
-B es igual a A per 5.
-B es igual a A entre 5.
+B es igual a 5 més A.
+B es igual a 5 menys A.
+B es igual a 5 per A.
+B es igual a 5 entre A.
+
+B = A.
+B = 5 + A.
+B = 5 - A.
+B = 5 * A.
+B = 5 / A.
 
 (Test: Assign variable operations)
 B es igual a A.
@@ -33,9 +46,27 @@ B es igual a A menys B.
 B es igual a A per B.
 B es igual a A entre B.
 
+B = A.
+B = 5 + A.
+B = 5 - A.
+B = 5 * A.
+B = 5 / A.
+
+(Test: Print)
+Print 5.
+Print 5,5.
 Print "Hello world!".
+Print A.
+
+Print 5 5,5.
+Print "Number 5: " 5.
+Print "Number 5,5: " 5,5.
+Print "Concatenate" " " "Strings".
 Print "A is: " A.
-Print "B is: " B.
+
+Print 5 + 5.
+Print 5 + 5,5.
+
 Print "A + B is: " A plus B.
 Print "B + A is: " B plus A.
 Print "A + B + 1 is: " A plus B plus 1.

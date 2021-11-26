@@ -19,7 +19,7 @@ pub fn parse_file(file: &mut File) -> String {
     let parse = Parser::parse(Rule::MAIN, &inp).die("Error parsing the file");
 
     let mut out: String =
-        "#[allow(non_snake_case)]\n#[allow(unused_variables)]\n#[allow(unused_mut)]\nfn main() {"
+        "#[allow(non_snake_case)]\n#[allow(unused_variables)]\n#[allow(unused_mut)]\n#[allow(unused_assignments)]\nfn main() {"
             .into();
 
     let mut global = Global::default();
@@ -88,25 +88,22 @@ fn parse_op(mut pairs: Pairs<Rule>) -> String {
         Rule::Div => '/',
         _ => '\0',
     };
-
+    
     let mut pairs = pairs.into_inner();
     let lhs = pairs.next().unwrap();
     let rhs = pairs.next().unwrap();
-
-    let lhs = if lhs.as_rule() == Rule::Op {
-        // Return underlying operation
-        parse_op(lhs.into_inner())
-    } else {
-        // Return Value itself
-        lhs.as_str().into()
+    
+    let lhs = match lhs.as_rule() {
+        Rule::Op => parse_op(lhs.into_inner()),
+        Rule::Float => lhs.as_str().replace(',', "."),
+        _ => lhs.as_str().into()
     };
-
-    let rhs = if rhs.as_rule() == Rule::Op {
-        // Return underlying operation
-        parse_op(rhs.into_inner())
-    } else {
-        // Return Value itself
-        rhs.as_str().into()
+    
+    
+    let rhs = match rhs.as_rule() {
+        Rule::Op => parse_op(rhs.into_inner()),
+        Rule::Float => rhs.as_str().replace(',', "."),
+        _ => rhs.as_str().into()
     };
 
     format!("{} {} {}", lhs, sym, rhs)
@@ -119,7 +116,8 @@ fn parse_print(pairs: Pairs<Rule>) -> String {
         res += "{}";
         rhs += &(", ".to_owned()
             + &match pair.as_rule() {
-                Rule::Name | Rule::Int | Rule::Float | Rule::String => pair.as_str().into(),
+                Rule::Name | Rule::Int | Rule::String => pair.as_str().into(),
+                Rule::Float => pair.as_str().replace(',', ".").into(),
                 Rule::Op => parse_op(pair.into_inner()),
                 _ => "".into(),
             });
