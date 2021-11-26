@@ -1,8 +1,11 @@
 [package]
-name = "Chat"
+name = "Intuitive"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 die = "0.2.0"
 itertools = "0.10.1"
+pest = "2.1.3"
+pest_derive = "2.1.0"
+rustfmt-wrapper = "0.1.0"
