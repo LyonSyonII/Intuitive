@@ -1,3 +1,5 @@
+// TODO: Turn variables hashset into hashmap with rule and check when operating
+
 use die::Die;
 use pest::{iterators::Pair, iterators::Pairs, Parser as P};
 use std::fs::File;
