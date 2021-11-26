@@ -1,34 +1,40 @@
 // Character rules
-WHITESPACE = _{ LINKER+ | NEWLINE | "\t" }
+WHITESPACE = _{ LINKER+ | "\t" }
 NOTHING = _{ WHITESPACE | "" }
  
 // Synonyms
 LINKER = _{ " es " | " és " | " a " | " que " | " than " | ", " | " " }
+Newline = { NEWLINE }
 KEYWORD = _{ EQUAL | ADD | SUB | MUL | DIV | LINKER }
-EQUAL = _{ "equal" | "igual" }
-ADD = _{  "mes" | "més" | "plus" }
-SUB = _{ "menys" | "minus" }
-MUL = _{ "per" | "multiplicat per" | "times" | "multiplied by" }
-DIV = _{ "entre" | "dividit entre" | "divided" | "divided by" }
+DEF = _{ ^"defineix" | ^"def" | ^"define" }
+AS = _{ "com" | "as" }
+EQUAL = _{ "equal" | "igual" | "=" }
+ADD = _{  "mes" | "més" | "plus" | "+" }
+SUB = _{ "menys" | "minus" | "-" }
+MUL = _{ "per" | "multiplicat per" | "times" | "multiplied by" | "*" }
+DIV = _{ "entre" | "dividit entre" | "divided" | "divided by" | "/" }
 PRINT = _{ ^"print" | ^"imprimeix" | ^"imprimir" }
 IF = _{ ^"si" | ^"if" }
 THEN = _{ ("llavors" | "then") ~ ":"? | ":" }
 LESS = _{ ("mes" | "més") ~ "petit" | "menor" | "less than" | "smaller than" }
 MORE = _{ ("mes" | "més") ~ "gran" | "major" | "more than" | "larger than" }
-EQUAL_CMP = _{ EQUAL | "equivalent" | "mateix" }
+EQUAL_CMP = _{ "equal" | "igual" | "equivalent" | "mateix" | "=="}
  
 // Atomics
-MAIN = _{ NOTHING ~ Expr+ ~ NOTHING }
+MAIN = _{ NOTHING ~ (Expr | COMM | Newline)+ ~ NOTHING }
+
+Comment = { (!("(" | ")") ~ ANY)* }
+COMM = _{ "(" ~ Comment ~ ")" }
 Name = @{ ASCII_ALPHA_UPPER ~ (ASCII_ALPHA)* }
 Float = { ASCII_DIGIT+ ~ "," ~ ASCII_DIGIT* }
 Int = { ASCII_DIGIT+ }
-String = { "\"" ~ (!"\"" ~ ANY)+ ~ "\"" }
+String = @{ "\"" ~ (!"\"" ~ ANY)+ ~ "\"" }
 True = { ^"cert" | ^"true" }
 False = { ^"fals" | ^"false" }
 Value = _{ Num | String }
 Num = _{ Int | Float }
-Rhs = _{ Value | Op | Name }
-NumRhs = _{ Num | Op | Name }
+Rhs = _{ Op | Value | Name }
+NumRhs = _{ Op | Num | Name }
 Lhs = _{ Value | Name }
 NumLhs = _{ Num | Name }
  
@@ -47,11 +53,12 @@ EqCmp = { Lhs ~ EQUAL_CMP ~ Rhs }
 // Compound expressions
 EXPRS = _{ NESTED_EXPRS | SIMPLE_EXPRS }
 NESTED_EXPRS = _{ If }
-SIMPLE_EXPRS = _{ Assign | Print }
+SIMPLE_EXPRS = _{ Def | Assign | Print }
 Expr = _{ EXPRS ~ "." }
 IfExpr = _{ SIMPLE_EXPRS ~ ";" }
 Op = { Add | Sub | Mul | Div }
 Cmp = { LessEq | Less | MoreEq | More | EqCmp }
+Def = { DEF ~ Name ~ (AS ~ Rhs)? }
 Assign = { Name ~ EQUAL ~ Rhs}
-Print = { PRINT ~ Rhs }
+Print = { PRINT ~ Rhs+ }
 If = { IF ~ Cmp ~ THEN ~ IfExpr* ~ SIMPLE_EXPRS }

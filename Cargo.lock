@@ -3,17 +3,6 @@
 version = 3
 
 [[package]]
-name = "Intuitive"
-version = "0.1.0"
-dependencies = [
- "die",
- "itertools",
- "pest",
- "pest_derive",
- "rustfmt-wrapper",
-]
-
-[[package]]
 name = "aho-corasick"
 version = "0.7.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -121,6 +110,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2456aef2e6b6a9784192ae780c0f15bc57df0e918585282325e8c8ac27737654"
 dependencies = [
  "winapi",
+]
+
+[[package]]
+name = "intuitive"
+version = "0.1.0"
+dependencies = [
+ "die",
+ "itertools",
+ "pest",
+ "pest_derive",
+ "rustfmt-wrapper",
 ]
 
 [[package]]
