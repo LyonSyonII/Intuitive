@@ -91,22 +91,24 @@ fn parse_op(mut pairs: Pairs<Rule>) -> String {
     
     let mut pairs = pairs.into_inner();
     let lhs = pairs.next().unwrap();
+    let lrule = lhs.as_rule();
     let rhs = pairs.next().unwrap();
     
-    let lhs = match lhs.as_rule() {
+    let lhs_s = match lhs.as_rule() {
         Rule::Op => parse_op(lhs.into_inner()),
+        Rule::Int if rhs.as_rule() == Rule::Float => lhs.as_str().to_owned() + ".0",
         Rule::Float => lhs.as_str().replace(',', "."),
         _ => lhs.as_str().into()
     };
     
-    
-    let rhs = match rhs.as_rule() {
+    let rhs_s = match rhs.as_rule() {
         Rule::Op => parse_op(rhs.into_inner()),
+        Rule::Int if lrule == Rule::Float => rhs.as_str().to_owned() + ".0",
         Rule::Float => rhs.as_str().replace(',', "."),
         _ => rhs.as_str().into()
     };
 
-    format!("{} {} {}", lhs, sym, rhs)
+    format!("{} {} {}", lhs_s, sym, rhs_s)
 }
 
 fn parse_print(pairs: Pairs<Rule>) -> String {
