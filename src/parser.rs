@@ -1,6 +1,4 @@
-// TODO: Turn variables hashset into hashmap with rule and check when operating
-
-use die::Die;
+use die::{Die, die};
 use pest::{iterators::Pair, iterators::Pairs, Parser as P};
 use std::fs::File;
 use std::io::*;
@@ -32,6 +30,22 @@ pub fn parse_file(file: &mut File) -> String {
     }
     rustfmt_wrapper::rustfmt(out + "}").die("Could not format the input")
 }
+
+pub fn parse_string(inp: &str) -> String {
+	let parse = Parser::parse(Rule::MAIN, &inp);
+	let parse = match parse {
+		Ok(p) => p,
+		Err(e) => die!(e.to_string()),
+	};
+
+	let mut global = Global::default();
+	let mut out = String::new();
+	for expr in parse {
+		out += &parse_expr(expr, &mut global);
+	}
+	out
+}
+
 fn parse_expr(expr: Pair<Rule>, global: &mut Global) -> String {
     match expr.as_rule() {
         Rule::Newline => "\n".into(),
@@ -67,17 +81,24 @@ fn parse_def(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
 fn parse_assig(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
     let name = pairs.next().unwrap().as_str();
     let rhs = pairs.next().unwrap();
-    let rule = rhs.as_rule();
+    let mut rule = rhs.as_rule();
     let rhs: String = match rule {
-        Rule::Name | Rule::Int | Rule::Float | Rule::String => rhs.as_str().into(),
+        Rule::String => rhs.as_str().into(),
+        Rule::Int => rhs.as_str().to_owned() + ".0",
+        Rule::Float => rhs.as_str().replace(',', "."),
+        Rule::Name => {
+        	let ret = rhs.as_str().into();
+        	rule = global.variables[ret];
+        	ret.into()
+        }
         Rule::Op => parse_op(rhs.into_inner(), &global).into(),
         _ => "".into(),
     };
 
-    match global.variables.contains_key(name) {
+    match global.variables.contains_key(name) && rule == global.variables[name] {
         true => format!("{} = {};", name, rhs),
         false => {
-        	global.variables[name.into()] = rule;
+        	global.variables.insert(name.into(), rule);
             format!("let mut {} = {};", name, rhs)
         }
     }
@@ -92,29 +113,26 @@ fn parse_op(mut pairs: Pairs<Rule>, global: &Global) -> String {
         Rule::Div => '/',
         _ => '\0',
     };
+
+	let parse_side = |hs: Pair<Rule>| -> String {
+    	match hs.as_rule() {
+    		Rule::Op => parse_op(hs.into_inner(), &global),
+    		Rule::Int /*if rrule == Rule::Float*/ => hs.as_str().to_owned() + ".0",
+    		Rule::Float => hs.as_str().replace(',', "."),
+    		_ => hs.as_str().into()
+    	}
+	};
     
     let mut pairs = pairs.into_inner();
-    let lhs = pairs.next().unwrap();
-    let lrule = lhs.as_rule();
-    let rhs = pairs.next().unwrap();
-    let rrule = rhs.as_rule();
-    let mut lhs = match lrule {
-        Rule::Op => parse_op(lhs.into_inner(), &global),
-        Rule::Int if rrule == Rule::Float => lhs.as_str().to_owned() + ".0",
-        Rule::Float => lhs.as_str().replace(',', "."),
-        _ => lhs.as_str().into()
-    };
-    
-    let mut rhs = match rrule {
-        Rule::Op => parse_op(rhs.into_inner(), &global),
-        Rule::Int if lrule == Rule::Float => rhs.as_str().to_owned() + ".0",
-        Rule::Float => rhs.as_str().replace(',', "."),
-        _ => rhs.as_str().into()
-    };
-
+    let lhs = parse_side(pairs.next().unwrap());
+    let rhs = parse_side(pairs.next().unwrap());
+	/*
     if lrule == Rule::Name && rrule == Rule::Name {
     	let lrule = global.variables[&lhs];
+    	println!("Lhs rule: {:?}", lrule);
     	let rrule = global.variables[&rhs];
+    	println!("Rhs rule: {:?}", rrule);
+    	
     	if lrule != rrule {
     		match lrule {
     			Rule::Int => lhs = format!("({} as f32)", lhs),
@@ -123,6 +141,7 @@ fn parse_op(mut pairs: Pairs<Rule>, global: &Global) -> String {
     		}
     	}
     }
+    */
 
     format!("{} {} {}", lhs, sym, rhs)
 }

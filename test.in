@@ -1,5 +1,5 @@
 (Test: Assign primitive)
-A es igual a 5.
+A es igual a 5 + 5.
 A = 5.
 
 (Test: Assign primitive operations)
