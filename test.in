@@ -1,8 +1,2 @@
-Diners = 200.
-PreuPoma = 5,25.
-Pomes = 0.
-
-Si Diners es mes gran o igual que PreuPoma: Pomes = Pomes + 1, Diners = Diners - PreuPoma.
-
-Escriu "Pomes: " Pomes.
-Escriu "Diners: " Diners.
+(A = "Hola" B = 34.)
+C = D.

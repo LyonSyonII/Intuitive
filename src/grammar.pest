@@ -5,7 +5,7 @@ NOTHING = _{ WHITESPACE | "" }
 // Synonyms
 LINKER = _{ " es " | " és " | " a " | " que " | " than " | " is " | " to " | " " }
 Newline = { NEWLINE }
-KEYWORD = _{ EQUAL | ADD | SUB | MUL | DIV | LINKER }
+KEYWORD = _{ EQUAL | ADD | SUB | MUL | DIV | LINKER | PRINT | IF | ELSE | THEN | OR | LESS | MORE }
 DEF = _{ ^"defineix" | ^"def" | ^"define" }
 AS = _{ "com" | "as" }
 EQUAL = _{ "equal" | "igual" | "=" }
@@ -15,29 +15,30 @@ MUL = _{ "per" | "multiplicat per" | "times" | "multiplied by" | "*" }
 DIV = _{ "entre" | "dividit entre" | "divided by" | "/" }
 PRINT = _{ ^"print" | ^"imprimeix" | ^"imprimir" | ^"escriu" }
 IF = _{ ^"si" | ^"if" }
+ELSE = _{ ^"else" | ^"si no" }
 THEN = _{ ("llavors" | "then") ~ ":"? | ":" }
 OR = _{ "o" | "or" }
 LESS = _{ ("mes" | "més") ~ "petit" | "menor" | "less than" | "smaller than" | "<" }
 LESS_EQ = _{ LESS ~ OR ~ EQUAL_CMP | "<=" }
 MORE = _{ ("mes" | "més") ~ "gran" | "major" | "more than" | "larger than" | ">" }
 MORE_EQ = _{ MORE ~ OR ~ EQUAL_CMP | ">=" }
-EQUAL_CMP = _{ "equal" | "igual" | "equivalent" | "mateix" | "==" }
+EQUAL_CMP = _{ "equal" | "igual" | "equivalent" | "mateix" | "==" | "=" }
  
 // Atomics
-MAIN = _{ NOTHING ~ (Expr | COMM | Newline)* ~ NOTHING }
+MAIN = _{ NOTHING ~ (Err | Expr | COMM | Newline)* ~ NOTHING }
 
 Comment = { (!("(" | ")") ~ ANY)* }
 COMM = _{ "(" ~ Comment ~ ")" }
-Name = @{ ASCII_ALPHA_UPPER ~ (ASCII_ALPHA)* }
+Name = @{ !KEYWORD ~ (ASCII_ALPHA_UPPER ~ (ASCII_ALPHA)*) }
 Float = @{ ASCII_DIGIT+ ~ "," ~ ASCII_DIGIT+ }
 Int = @{ ASCII_DIGIT+ }
 FmtString = { Name ~ String ~ (String | Name)* | String ~ Name ~ (String | Name)* }
 String = @{ "\"" ~ (!"\"" ~ ANY)+ ~ "\"" }
 True = { ^"cert" | ^"true" }
 False = { ^"fals" | ^"false" }
-Value = _{ Num | FmtString | String}
+Value = _{ Num | FmtString | String }
 Num = _{ Float | Int }
-PrintRhs = _{ Op | Num | String | Name }
+PrintRhs = _{ Op | Num | String | !KEYWORD ~ Name }
 Rhs = _{ Op | Value | Name }
 NumRhs = _{ Op | Num | Name }
 Lhs = _{ Value | Name }
@@ -67,3 +68,10 @@ Def = { DEF ~ Name ~ (AS ~ Rhs)? }
 Assign = { Name ~ EQUAL ~ Rhs }
 Print = { PRINT ~ PrintRhs+ }
 If = { IF ~ Cmp ~ THEN ~ NEWLINE? ~ IfExpr* ~ SIMPLE_EXPRS }
+
+// Errors
+Err = { NotDot | NotUpper }
+NotDot = { EXPRS ~ !("." | ",") }
+NotUpper = { !KEYWORD ~ ASCII_ALPHA_LOWER+ }
+//WrongToken = { Name ~ Name }
+NotInit = { "Alfabrega" }
