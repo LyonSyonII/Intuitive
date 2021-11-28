@@ -3,7 +3,7 @@ WHITESPACE = _{ LINKER+ | "\t" }
 NOTHING = _{ WHITESPACE | "" }
  
 // Synonyms
-LINKER = _{ " es " | " és " | " a " | " que " | " than " | " is " | " to " | " " }
+LINKER = _{ " es " | " és " | " a " | " que " | " than " | " is " | " to " | " " | " compleix " }
 Newline = { NEWLINE }
 KEYWORD = _{ EQUAL | ADD | SUB | MUL | DIV | LINKER | PRINT | IF | ELSE | THEN | OR | LESS | MORE }
 DEF = _{ ^"defineix" | ^"def" | ^"define" }
@@ -15,7 +15,8 @@ MUL = _{ "per" | "multiplicat per" | "times" | "multiplied by" | "*" }
 DIV = _{ "entre" | "dividit entre" | "divided by" | "/" }
 PRINT = _{ ^"print" | ^"imprimeix" | ^"imprimir" | ^"escriu" }
 IF = _{ ^"si" | ^"if" }
-ELSE = _{ ^"else" | ^"si no" }
+ELSE = _{ ^"else" | ^"si no" | ^"si cap" | ^"if none" }
+ELSEIF = _{ ^"si no pero" | ^"else but" | ^"else if" }
 THEN = _{ ("llavors" | "then") ~ ":"? | ":" }
 OR = _{ "o" | "or" }
 LESS = _{ ("mes" | "més") ~ "petit" | "menor" | "less than" | "smaller than" | "<" }
@@ -58,7 +59,7 @@ EqCmp = { Rhs ~ EQUAL_CMP ~ Rhs }
 
 // Compound expressions
 EXPRS = _{ NESTED_EXPRS | SIMPLE_EXPRS }
-NESTED_EXPRS = _{ If }
+NESTED_EXPRS = _{ If | Else | ElseIf }
 SIMPLE_EXPRS = _{ Def | Assign | Print }
 Expr = _{ EXPRS ~ "." }
 IfExpr = _{ SIMPLE_EXPRS ~ "," }
@@ -68,10 +69,12 @@ Def = { DEF ~ Name ~ (AS ~ Rhs)? }
 Assign = { Name ~ EQUAL ~ Rhs }
 Print = { PRINT ~ PrintRhs+ }
 If = { IF ~ Cmp ~ THEN ~ NEWLINE? ~ IfExpr* ~ SIMPLE_EXPRS }
+Else = { ELSE ~ THEN? ~ NEWLINE? ~ IfExpr* ~ SIMPLE_EXPRS }
+ElseIf = { ELSEIF ~ Cmp ~ THEN ~ IfExpr* ~ SIMPLE_EXPRS }
 
 // Errors
 Err = { NotDot | NotUpper }
 NotDot = { EXPRS ~ !("." | ",") }
 NotUpper = { !KEYWORD ~ ASCII_ALPHA_LOWER+ }
 //WrongToken = { Name ~ Name }
-NotInit = { "Alfabrega" }
+NotInit = { "UNREACHABLE" }

@@ -35,56 +35,75 @@ mod tests {
     }
 
     fn gen_op_test(equals: &[&str], operations: &[&str], correct_eq: &str, correct_op: &str) {
-    	for eq in equals {
-    		for op in operations {
-    			for (x, y) in &[("5.0", "10.0"), ("3,1416", "1,0"), ("3.0", "25,125"), ("A", "1.0"), ("A", "2,5"), ("A", "A")] {
-    				let test = format!("A {} {} {} {}.", eq, x.replace(".0", ""), op, y.replace(".0", ""));
-    				let answer = format!("let mut A {} {} {} {};", correct_eq, x.replace(',', "."), correct_op, y.replace(',', "."));
-    				println!("Test: {}", test);
-    				println!("Answer: {}", &answer);
-    				assert_parse(&test, &answer);
-    			}
-    		}
-    	}
+        for eq in equals {
+            for op in operations {
+                for (x, y) in &[
+                    ("5.0", "10.0"),
+                    ("3,1416", "1,0"),
+                    ("3.0", "25,125"),
+                    ("A", "1.0"),
+                    ("A", "2,5"),
+                    ("A", "A"),
+                ] {
+                    let test = format!(
+                        "A {} {} {} {}.",
+                        eq,
+                        x.replace(".0", ""),
+                        op,
+                        y.replace(".0", "")
+                    );
+                    let answer = format!(
+                        "let mut A {} {} {} {};",
+                        correct_eq,
+                        x.replace(',', "."),
+                        correct_op,
+                        y.replace(',', ".")
+                    );
+                    println!("Test: {}", test);
+                    println!("Answer: {}", &answer);
+                    assert_parse(&test, &answer);
+                }
+            }
+        }
     }
 
     #[test]
     fn add() {
-    	gen_op_test(
-    		&["is equal to", "equal", "es igual a", "="],
-    		&["plus", "mes", "+"],
-    		"=",
-    		"+",
-    	);
+        gen_op_test(
+            &["is equal to", "equal", "es igual a", "="],
+            &["plus", "mes", "+"],
+            "=",
+            "+",
+        );
     }
 
     #[test]
     fn sub() {
-         	gen_op_test(
-    		&["is equal to", "equal", "es igual a", "="],
-    		&["minus", "menys", "-"],
-    		"=",
-    		"-",
-    	);
+        gen_op_test(
+            &["is equal to", "equal", "es igual a", "="],
+            &["minus", "menys", "-"],
+            "=",
+            "-",
+        );
     }
 
     #[test]
     fn mul() {
-    	gen_op_test(
-    		&["is equal to", "equal", "es igual a", "="],
-    		&["times", "multiplied by", "per",  "multiplicat per", "*"],
-    		"=",
-    		"*",
-    	);
+        gen_op_test(
+            &["is equal to", "equal", "es igual a", "="],
+            &["times", "multiplied by", "per", "multiplicat per", "*"],
+            "=",
+            "*",
+        );
     }
 
     #[test]
     fn div() {
-           	gen_op_test(
-    		&["is equal to", "equal", "es igual a", "="],
-    		&["divided by", "entre", "dividit entre"],
-    		"=",
-    		"/",
-    	);    
+        gen_op_test(
+            &["is equal to", "equal", "es igual a", "="],
+            &["divided by", "entre", "dividit entre"],
+            "=",
+            "/",
+        );
     }
 }
