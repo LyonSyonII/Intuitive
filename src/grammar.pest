@@ -3,7 +3,7 @@ WHITESPACE = _{ LINKER+ | "\t" }
 NOTHING = _{ WHITESPACE | "" }
  
 // Synonyms
-LINKER = _{ " es " | " és " | " a " | " que " | " than " | "is" | "to" | " " }
+LINKER = _{ " es " | " és " | " a " | " que " | " than " | " is " | " to " | " " }
 Newline = { NEWLINE }
 KEYWORD = _{ EQUAL | ADD | SUB | MUL | DIV | LINKER }
 DEF = _{ ^"defineix" | ^"def" | ^"define" }
@@ -12,12 +12,15 @@ EQUAL = _{ "equal" | "igual" | "=" }
 ADD = _{  "mes" | "més" | "plus" | "+" }
 SUB = _{ "menys" | "minus" | "-" }
 MUL = _{ "per" | "multiplicat per" | "times" | "multiplied by" | "*" }
-DIV = _{ "entre" | "dividit entre" | "divided" | "divided by" | "/" }
+DIV = _{ "entre" | "dividit entre" | "divided by" | "/" }
 PRINT = _{ ^"print" | ^"imprimeix" | ^"imprimir" | ^"escriu" }
 IF = _{ ^"si" | ^"if" }
 THEN = _{ ("llavors" | "then") ~ ":"? | ":" }
+OR = _{ "o" | "or" }
 LESS = _{ ("mes" | "més") ~ "petit" | "menor" | "less than" | "smaller than" | "<" }
+LESS_EQ = _{ LESS ~ OR ~ EQUAL_CMP | "<=" }
 MORE = _{ ("mes" | "més") ~ "gran" | "major" | "more than" | "larger than" | ">" }
+MORE_EQ = _{ MORE ~ OR ~ EQUAL_CMP | ">=" }
 EQUAL_CMP = _{ "equal" | "igual" | "equivalent" | "mateix" | "==" }
  
 // Atomics
@@ -26,13 +29,15 @@ MAIN = _{ NOTHING ~ (Expr | COMM | Newline)* ~ NOTHING }
 Comment = { (!("(" | ")") ~ ANY)* }
 COMM = _{ "(" ~ Comment ~ ")" }
 Name = @{ ASCII_ALPHA_UPPER ~ (ASCII_ALPHA)* }
-Float = @{ ASCII_DIGIT+ ~ "," ~ ASCII_DIGIT* }
+Float = @{ ASCII_DIGIT+ ~ "," ~ ASCII_DIGIT+ }
 Int = @{ ASCII_DIGIT+ }
+FmtString = { Name ~ String ~ (String | Name)* | String ~ Name ~ (String | Name)* }
 String = @{ "\"" ~ (!"\"" ~ ANY)+ ~ "\"" }
 True = { ^"cert" | ^"true" }
 False = { ^"fals" | ^"false" }
-Value = _{ Num | String }
+Value = _{ Num | FmtString | String}
 Num = _{ Float | Int }
+PrintRhs = _{ Op | Num | String | Name }
 Rhs = _{ Op | Value | Name }
 NumRhs = _{ Op | Num | Name }
 Lhs = _{ Value | Name }
@@ -43,22 +48,22 @@ Add = { NumLhs ~ ADD ~ NumRhs }
 Sub = { NumLhs ~ SUB ~ NumRhs }
 Mul = { NumLhs ~ MUL ~ NumRhs }
 Div = { NumLhs ~ DIV ~ NumRhs }
- 
-Less = { Lhs ~ LESS ~ Rhs }
-LessEq = { Lhs ~ LESS ~ EQUAL_CMP ~ Rhs }
-More = { Lhs ~ MORE ~ Rhs }
-MoreEq = { Lhs ~ MORE ~ EQUAL_CMP ~ Rhs }
-EqCmp = { Lhs ~ EQUAL_CMP ~ Rhs }
+
+Less = { Rhs ~ LESS ~ Rhs }
+LessEq = { Rhs ~ LESS_EQ ~ Rhs }
+More = {Rhs ~ MORE ~ Rhs }
+MoreEq = { Rhs ~ MORE_EQ ~ Rhs }
+EqCmp = { Rhs ~ EQUAL_CMP ~ Rhs }
 
 // Compound expressions
 EXPRS = _{ NESTED_EXPRS | SIMPLE_EXPRS }
 NESTED_EXPRS = _{ If }
 SIMPLE_EXPRS = _{ Def | Assign | Print }
 Expr = _{ EXPRS ~ "." }
-IfExpr = _{ SIMPLE_EXPRS ~ ";" }
+IfExpr = _{ SIMPLE_EXPRS ~ "," }
 Op = { Add | Sub | Mul | Div }
 Cmp = { LessEq | Less | MoreEq | More | EqCmp }
 Def = { DEF ~ Name ~ (AS ~ Rhs)? }
 Assign = { Name ~ EQUAL ~ Rhs }
-Print = { PRINT ~ Rhs+ }
-If = { IF ~ Cmp ~ THEN ~ IfExpr* ~ SIMPLE_EXPRS }
+Print = { PRINT ~ PrintRhs+ }
+If = { IF ~ Cmp ~ THEN ~ NEWLINE? ~ IfExpr* ~ SIMPLE_EXPRS }
