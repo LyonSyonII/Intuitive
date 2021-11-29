@@ -3,33 +3,93 @@ WHITESPACE = _{ LINKER+ | "\t" }
 NOTHING = _{ WHITESPACE | "" }
  
 // Synonyms
-LINKER = _{ " es " | " és " | " a " | " que " | " than " | " is " | " to " | " " | " compleix " }
+LINKER_EN = _{" " ~ ("than" | "is" | "to" | "also" | "of") ~ " "}
+LINKER_CAT = _{" " ~ ("es" | "és" | "a" | "que" | "compleix" | "també" | "tambe") ~ " "}
+LINKER = _{ LINKER_EN | LINKER_CAT | " " }
+
 Newline = { NEWLINE }
 KEYWORD = _{ EQUAL | ADD | SUB | MUL | DIV | LINKER | PRINT | IF | ELSE | THEN | OR | LESS | MORE }
-DEF = _{ ^"defineix" | ^"def" | ^"define" }
-AS = _{ "com" | "as" }
-EQUAL = _{ "equal" | "igual" | "=" }
-ADD = _{  "mes" | "més" | "plus" | "+" }
-SUB = _{ "menys" | "minus" | "-" }
-MUL = _{ "per" | "multiplicat per" | "times" | "multiplied by" | "*" }
-DIV = _{ "entre" | "dividit entre" | "divided by" | "/" }
-PRINT = _{ ^"print" | ^"imprimeix" | ^"imprimir" | ^"escriu" }
-IF = _{ ^"si" | ^"if" }
-ELSE = _{ ^"else" | ^"si no" | ^"si cap" | ^"if none" }
-ELSEIF = _{ ^"si no pero" | ^"else but" | ^"else if" }
-THEN = _{ ("llavors" | "then") ~ ":"? | ":" }
-OR = _{ "o" | "or" }
-LESS = _{ ("mes" | "més") ~ "petit" | "menor" | "less than" | "smaller than" | "<" }
+
+DEF_EN = _{ ^"define" | ^"def" }
+DEF_CAT = _{ ^"defineix" }
+DEF = _{ DEF_EN | DEF_CAT }
+
+AS_EN = _{ "as" }
+AS_CAT = _{ "com" }
+AS = _{ AS_EN | AS_CAT }
+
+EQUAL_EN = _{ "equal" }
+EQUAL_CAT = _{ "igual" }
+EQUAL = _{ EQUAL_EN | EQUAL_CAT | "=" }
+
+ADD_EN = _{ "plus" }
+ADD_CAT = _{ "mes" | "més" }
+ADD = _{  ADD_EN | ADD_CAT | "+" }
+
+SUB_EN = _{ "minus" }
+SUB_CAT = _{ "menys" }
+SUB = _{ SUB_EN | SUB_CAT | "-" }
+
+MUL_EN = _{ "times" | "multiplied by" }
+MUL_CAT = _{ "per" | "multiplicat per" }
+MUL = _{ MUL_CAT | MUL_EN | "*" }
+
+DIV_EN = _{ "divided by" }
+DIV_CAT = _{ "entre" | "dividit entre" }
+DIV = _{ DIV_EN | DIV_CAT | "/" }
+
+// Or used in >= and <=
+OR_LM_EQ_EN = _{ "or" }
+OR_LM_EQ_CAT = _{ "o" }
+OR_LM_EQ = _{ OR_LM_EQ_EN | OR_LM_EQ_CAT }
+
+LESS_EN = _{ "less" | "smaller" }
+LESS_CAT = _{ ("mes" | "més") ~ "petit" | "menor" }
+LESS = _{ LESS_EN | LESS_CAT | "<" }
 LESS_EQ = _{ LESS ~ OR ~ EQUAL_CMP | "<=" }
-MORE = _{ ("mes" | "més") ~ "gran" | "major" | "more than" | "larger than" | ">" }
+
+MORE_EN = _{ "more" | "larger" }
+MORE_CAT = _{ ("mes" | "més") ~ "gran" | "major" }
+MORE = _{  MORE_EN | MORE_CAT | ">" }
 MORE_EQ = _{ MORE ~ OR ~ EQUAL_CMP | ">=" }
-EQUAL_CMP = _{ "equal" | "igual" | "equivalent" | "mateix" | "==" | "=" }
+
+EQUAL_CMP_EN = _{ "equal" | "same" }
+EQUAL_CMP_CAT = _{ "igual" | "equivalent" | "mateix" }
+EQUAL_CMP = _{ EQUAL_CMP_EN | EQUAL_CMP_CAT | "==" | "=" }
+
+// Or used in logical expressions (e.g: if A > 5 OR A < 0 )
+OR = _{ OR_LM_EQ | "||" }
+
+// And used in logical expressions (e.g: if A > 5 AND A < 0)
+AND_EN = _{ "and" }
+AND_CAT = _{ "i" }
+AND = _{ AND_EN | AND_CAT | "&&" }
+
+PRINT_EN = _{ ^"print" | ^"write" }
+PRINT_CAT = _{^"imprimeix" | ^"imprimir" | ^"escriu" }
+PRINT = _{ PRINT_EN | PRINT_CAT }
+
+IF_EN = _{ ^"if" }
+IF_CAT = _{ ^"si" }
+IF = _{ IF_EN | IF_CAT }
+
+ELSE_EN = _{ ^"else" | ^"if none" }
+ELSE_CAT = _{ ^"si no" | ^"si cap" }
+ELSE = _{ ELSE_EN | ELSE_CAT }
+
+ELSEIF_EN = _{ ^"else but" | ^"else if" }
+ELSEIF_CAT = _{ ^"si no pero" | ^"si no i" }
+ELSEIF = _{ ELSEIF_EN | ELSE_CAT }
+
+THEN_EN = _{ "then" }
+THEN_CAT = _{ "llavors" }
+THEN = _{ (THEN_EN | THEN_CAT) ~ ":"? | ":" }
  
 // Atomics
-MAIN = _{ NOTHING ~ (Err | Expr | COMM | Newline)* ~ NOTHING }
+MAIN = _{ NOTHING ~ (Err | Expr | COMMENT | Newline)* ~ NOTHING }
 
 Comment = { (!("(" | ")") ~ ANY)* }
-COMM = _{ "(" ~ Comment ~ ")" }
+COMMENT = _{ "(" ~ Comment ~ ")" }
 Name = @{ !KEYWORD ~ (ASCII_ALPHA_UPPER ~ (ASCII_ALPHA)*) }
 Float = @{ ASCII_DIGIT+ ~ "," ~ ASCII_DIGIT+ }
 Int = @{ ASCII_DIGIT+ }
