@@ -8,7 +8,7 @@ LINKER_EN = _{" " ~ ("than" | "is" | "to" | "also" | "of") ~ " "}
 LINKER_CAT = _{" " ~ ("es" | "és" | "a" | "que" | "compleix" | "també" | "tambe") ~ " "}
 LINKER = _{ LINKER_EN | LINKER_CAT | " " }
 
-KEYWORD = _{ EQUAL | EQUAL_CMP | ADD | SUB | MUL | DIV | LINKER | PRINT | IF | ELSE | ELSEIF | THEN | OR | LESS | MORE }
+KEYWORD = _{ EQUAL | EQUAL_CMP | ADD | SUB | MUL | DIV | LINKER | PRINT | IF | ELSE | ELSEIF | THEN | OR | LOWER | GREATER }
 
 DEF_EN = _{ ^"define" | ^"def" }
 DEF_CAT = _{ ^"defineix" }
@@ -18,25 +18,49 @@ AS_EN = _{ "as" }
 AS_CAT = _{ "com" }
 AS = _{ AS_EN | AS_CAT }
 
+TO_EN = _{ "to" }
+TO_CAT = _{ "a" }
+TO = _{ TO_EN | TO_CAT }
+
+BY_EN = _{ "by" }
+BY_CAT = _{ "per" }
+BY = _{ BY_EN | BY_CAT }
+
 EQUAL_EN = _{ "equal" }
 EQUAL_CAT = _{ "igual" }
 EQUAL = _{ EQUAL_EN | EQUAL_CAT | "=" }
 
 ADD_EN = _{ "plus" }
 ADD_CAT = _{ "mes" | "més" }
-ADD = _{  ADD_EN | ADD_CAT | "+" }
+ADD = _{ ADD_EN | ADD_CAT | "+" }
+ADD_EQ_EN = _{ ^"add" }
+ADD_EQ_CAT = _{ ^"suma" | ^"afegeix" }
+ADD_EQ = _{ ADD_EQ_EN | ADD_EQ_CAT }
 
 SUB_EN = _{ "minus" }
 SUB_CAT = _{ "menys" }
 SUB = _{ SUB_EN | SUB_CAT | "-" }
+SUB_EQ_EN = _{ ^"substract" | ^"sub" }
+SUB_EQ_CAT = _{ ^"resta" | ^"treu" }
+SUB_EQ = _{ SUB_EQ_EN | SUB_EQ_CAT }
+SUB_TO_EN = _{ "from" }
+SUB_TO = _{ TO | SUB_TO_EN}
 
 MUL_EN = _{ "times" | "multiplied by" }
 MUL_CAT = _{ "per" | "multiplicat per" }
 MUL = _{ MUL_CAT | MUL_EN | "*" }
+MUL_EQ_EN = _{ ^"multiply" | ^"mult" }
+MUL_EQ_CAT = _{ ^"multiplica" }
+MUL_EQ = _{ MUL_EQ_EN | MUL_EQ_CAT }
 
 DIV_EN = _{ "divided by" }
 DIV_CAT = _{ "entre" | "dividit entre" }
 DIV = _{ DIV_EN | DIV_CAT | "/" }
+DIV_EQ_EN = _{ ^"divide" | ^"div" }
+DIV_EQ_CAT = _{ "divideix" }
+DIV_EQ = _{ DIV_EQ_EN | DIV_EQ_CAT }
+DIV_BY_CAT = _{ "entre" }
+DIV_BY = _{ BY_EN | DIV_BY_CAT}
 
 NUM_OPS = _{ ADD | SUB | MUL | DIV }
 
@@ -45,15 +69,15 @@ OR_LM_EQ_EN = _{ "or" }
 OR_LM_EQ_CAT = _{ "o" }
 OR_LM_EQ = _{ OR_LM_EQ_EN | OR_LM_EQ_CAT }
 
-LESS_EN = _{ "less" | "smaller" }
-LESS_CAT = _{ ("mes" | "més") ~ "petit" | "menor" }
-LESS = _{ LESS_EN | LESS_CAT | "<" }
-LESS_EQ = _{ LESS ~ OR ~ EQUAL_CMP | "<=" }
+LOW_EN = _{ "less" | "smaller" | "lower" }
+LOW_CAT = _{ ("mes" | "més") ~ "petit" | "menor" }
+LOWER = _{ LOW_EN | LOW_CAT | "<" }
+LOW_EQ = _{ LOWER ~ OR ~ EQUAL_CMP | "<=" }
 
-MORE_EN = _{ "more" | "larger" }
-MORE_CAT = _{ ("mes" | "més") ~ "gran" | "major" }
-MORE = _{  MORE_EN | MORE_CAT | ">" }
-MORE_EQ = _{ MORE ~ OR ~ EQUAL_CMP | ">=" }
+GREAT_EN = _{ "more" | "larger" | "greater" }
+GREAT_CAT = _{ ("mes" | "més") ~ "gran" | "major" }
+GREATER = _{  GREAT_EN | GREAT_CAT | ">" }
+GREAT_EQ = _{ GREATER ~ OR ~ EQUAL_CMP | ">=" }
 
 EQUAL_CMP_EN = _{ "equal" | "same" }
 EQUAL_CMP_CAT = _{ "igual" | "equivalent" | "mateix" }
@@ -80,7 +104,7 @@ ELSE_CAT = _{ ^"si no" | ^"si cap" }
 ELSE = _{ ELSE_EN | ELSE_CAT }
 
 ELSEIF_EN = _{ ^"else but" | ^"else if" }
-ELSEIF_CAT = _{ ^"si no pero" | ^"si no i" }
+ELSEIF_CAT = _{ ^"si no pero" | ^"si no i" | ^"d'altra banda si" | "en canvi si" }
 ELSEIF = _{ ELSEIF_EN | ELSEIF_CAT }
 
 THEN_EN = _{ "then" }
@@ -107,33 +131,37 @@ NUM = _{ Float | Int }
 STR = _{ FmtString | String }
 
 RHS = _{ Op | STR | NUM | Name }
-LHS = _{ VALUE | Name }
-NUM_LHS = _{ String | NUM | Name }
+LHS = _{ String | NUM | Name }
 PRINT_LHS = _{ Op | NUM | String | !KEYWORD ~ Name }
  
 // Binary expressions
 // CANVIAT NUM_RHS PER RHS
-// CANVIAT NUM_LHS PER LHS
-Add = { NUM_LHS ~ ADD ~ RHS }
-Sub = { NUM_LHS ~ SUB ~ RHS }
-Mul = { NUM_LHS ~ MUL ~ RHS }
-Div = { NUM_LHS ~ DIV ~ RHS }
+// CANVIAT LHS PER LHS
+Add = { LHS ~ LINKER* ~ ADD ~ LINKER* ~ RHS }
+Sub = { LHS ~ LINKER* ~ SUB ~ LINKER* ~ RHS }
+Mul = { LHS ~ LINKER* ~ MUL ~ LINKER* ~ RHS }
+Div = { LHS ~ LINKER* ~ DIV ~ LINKER* ~ RHS }
 
-Less = { RHS ~ LESS ~ RHS }
-LessEq = { RHS ~ LESS_EQ ~ RHS }
-More = {RHS ~ MORE ~ RHS }
-MoreEq = { RHS ~ MORE_EQ ~ RHS }
+AddEq = ${ ADD_EQ ~ " "+ ~ RHS ~ " "+ ~ TO ~ " "+ ~ Name }
+SubEq = ${ SUB_EQ ~ " "+ ~ RHS ~ " "+ ~ SUB_TO ~ " "+ ~ Name }
+MulEq = ${ MUL_EQ ~ " "+ ~ Name ~ " "+ ~ BY ~ " "+ ~ RHS }
+DivEq = ${ DIV_EQ ~ " "+ ~ Name ~ " "+ ~ DIV_BY ~ " "+ ~ RHS }
+
+Lower = { RHS ~ LOWER ~ RHS }
+LowEq = { RHS ~ LOW_EQ ~ RHS }
+Greater = {RHS ~ GREATER ~ RHS }
+GreatEq = { RHS ~ GREAT_EQ ~ RHS }
 EqCmp = { RHS ~ EQUAL_CMP ~ RHS }
 
 // Compound expressions
 EXPR = _{ EXPRS ~ "." }
 EXPRS = _{ NESTED_EXPRS | SIMPLE_EXPRS }
 NESTED_EXPRS = _{ If | Else | ElseIf }
-SIMPLE_EXPRS = _{ Def | Assign | Print }
+SIMPLE_EXPRS = _{ Def | Assign | Print | AddEq | SubEq | MulEq | DivEq }
 IFEXPR = _{ SIMPLE_EXPRS ~ "," }
 
 Op = { Add | Sub | Mul | Div }
-Cmp = { LessEq | Less | MoreEq | More | EqCmp }
+Cmp = { LowEq | Lower | GreatEq | Greater | EqCmp }
 Def = { DEF ~ Name ~ (AS ~ RHS)? }
 Assign = { Name ~ EQUAL ~ RHS }
 Print = { PRINT ~ PRINT_LHS+ }

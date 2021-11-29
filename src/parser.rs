@@ -52,7 +52,7 @@ pub fn parse_file(file: &mut File) -> String {
     let mut out: String =
         "#[allow(non_snake_case)]\n#[allow(unused_variables)]\n#[allow(unused_mut)]\n#[allow(unused_assignments)]\nfn main() {"
             .into();
-
+    
     let mut global = Global::new();
     for expr in parse {
         out += &parse_expr(expr, &mut global)
@@ -93,6 +93,10 @@ fn parse_expr(expr: Pair<Rule>, global: &mut Global) -> String {
         Rule::If => parse_if(Rule::If, expr.into_inner(), global),
         Rule::Else => parse_if(Rule::Else, expr.into_inner(), global),
         Rule::ElseIf => parse_if(Rule::ElseIf, expr.into_inner(), global),
+        Rule::AddEq => parse_op_eq("+=", true, expr.into_inner(), global),
+        Rule::SubEq => parse_op_eq("-=", true, expr.into_inner(), global),
+        Rule::MulEq => parse_op_eq("*=", false, expr.into_inner(), global),
+        Rule::DivEq => parse_op_eq("/=", false, expr.into_inner(), global),
         _ => String::new(),
     }
 }
@@ -167,6 +171,20 @@ fn parse_if(rule: Rule, mut pairs: Pairs<Rule>, global: &mut Global) -> String {
     lhs + "}"
 }
 
+fn parse_op_eq(sym: &str, reverse: bool, mut pairs: Pairs<Rule>, global: &mut Global) -> String {
+    let lhs = pairs.next().unwrap();
+    let rhs = pairs.next().unwrap();
+    
+    let (name, rhs) = if reverse {
+        (rhs.as_str(), parse_rhs(lhs, &global).0)
+    }
+    else {
+        (lhs.as_str(), parse_rhs(rhs, &global).0)
+    };
+
+    format!("{} {} {};", name, sym, rhs)
+}
+
 fn parse_op(mut pairs: Pairs<Rule>, global: &Global) -> (String, Rule) {
     let pairs = pairs.next().unwrap();
     let sym = match pairs.as_rule() {
@@ -174,10 +192,10 @@ fn parse_op(mut pairs: Pairs<Rule>, global: &Global) -> (String, Rule) {
         Rule::Sub => "-",
         Rule::Mul => "*",
         Rule::Div => "/",
-        Rule::Less => "<",
-        Rule::LessEq => "<=",
-        Rule::More => ">",
-        Rule::MoreEq => ">=",
+        Rule::Lower => "<",
+        Rule::LowEq => "<=",
+        Rule::Greater => ">",
+        Rule::GreatEq => ">=",
         Rule::EqCmp => "==",
         _ => "",
     };

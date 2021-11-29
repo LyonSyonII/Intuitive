@@ -1,10 +1,14 @@
-Anys es igual a 10. (Llegeix input de l'usuari)
+A = 5.
+Print "A: "A.
 
-Si Anys es mes petit o igual a 5: Escriu "Preu entrada: 10e".
-Si no es compleix pero Anys < 12: Escriu "Preu entrada: 14e".
-Si no pero Anys < 21: Escriu "Preu entrada: 16e".
-<<<<<<< Updated upstream
-Si cap llavors Escriu "Preu entrada: 20e".
-=======
-Si cap llavors Escriu "Preu entrada: 20e".
->>>>>>> Stashed changes
+Add 10 to A.
+Print "A + 10 = " A.
+
+Substract 12 from A.
+Print "A - 12 = " A.
+
+Multiply A by 3.
+Print "A * 3 = " A.
+
+Divide A by 2.
+Print "A / 2 = " A.
