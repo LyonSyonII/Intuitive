@@ -1,13 +1,14 @@
 // Character rules
 WHITESPACE = _{ LINKER+ | "\t" }
 NOTHING = _{ WHITESPACE | "" }
- 
+Newline = { NEWLINE }
+
 // Synonyms
 LINKER_EN = _{" " ~ ("than" | "is" | "to" | "also" | "of") ~ " "}
 LINKER_CAT = _{" " ~ ("es" | "és" | "a" | "que" | "compleix" | "també" | "tambe") ~ " "}
 LINKER = _{ LINKER_EN | LINKER_CAT | " " }
 
-Newline = { NEWLINE }
+
 KEYWORD = _{ EQUAL | ADD | SUB | MUL | DIV | LINKER | PRINT | IF | ELSE | THEN | OR | LESS | MORE }
 
 DEF_EN = _{ ^"define" | ^"def" }
@@ -37,6 +38,8 @@ MUL = _{ MUL_CAT | MUL_EN | "*" }
 DIV_EN = _{ "divided by" }
 DIV_CAT = _{ "entre" | "dividit entre" }
 DIV = _{ DIV_EN | DIV_CAT | "/" }
+
+NUM_OPS = _{ ADD | SUB | MUL | DIV }
 
 // Or used in >= and <=
 OR_LM_EQ_EN = _{ "or" }
@@ -79,62 +82,69 @@ ELSE = _{ ELSE_EN | ELSE_CAT }
 
 ELSEIF_EN = _{ ^"else but" | ^"else if" }
 ELSEIF_CAT = _{ ^"si no pero" | ^"si no i" }
-ELSEIF = _{ ELSEIF_EN | ELSE_CAT }
+ELSEIF = _{ ELSEIF_EN | ELSEIF_CAT }
 
 THEN_EN = _{ "then" }
 THEN_CAT = _{ "llavors" }
 THEN = _{ (THEN_EN | THEN_CAT) ~ ":"? | ":" }
  
 // Atomics
-MAIN = _{ NOTHING ~ (Err | Expr | COMMENT | Newline)* ~ NOTHING }
+MAIN = _{ NOTHING ~ (Err | EXPR | COMMENT | Newline)* ~ NOTHING }
 
 Comment = { (!("(" | ")") ~ ANY)* }
 COMMENT = _{ "(" ~ Comment ~ ")" }
+
 Name = @{ !KEYWORD ~ (ASCII_ALPHA_UPPER ~ (ASCII_ALPHA)*) }
 Float = @{ ASCII_DIGIT+ ~ "," ~ ASCII_DIGIT+ }
 Int = @{ ASCII_DIGIT+ }
-FmtString = { Name ~ String ~ (String | Name)* | String ~ Name ~ (String | Name)* }
+FmtString = { (NUM | String | Name) ~ (NUM | String | Name)+ }
 String = @{ "\"" ~ (!"\"" ~ ANY)+ ~ "\"" }
+
 True = { ^"cert" | ^"true" }
 False = { ^"fals" | ^"false" }
-Value = _{ Num | FmtString | String }
-Num = _{ Float | Int }
-PrintRhs = _{ Op | Num | String | !KEYWORD ~ Name }
-Rhs = _{ Op | Value | Name }
-NumRhs = _{ Op | Num | Name }
-Lhs = _{ Value | Name }
-NumLhs = _{ Num | Name }
+
+VALUE = _{ NUM | STR }
+NUM = _{ Float | Int }
+STR = _{ FmtString | String }
+
+RHS = _{ Op | VALUE | Name }
+NUM_RHS = _{ Op | NUM | Name }
+LHS = _{ VALUE | Name }
+NUM_LHS = _{ NUM | Name }
+PRINT_LHS = _{ Op | NUM | String | !KEYWORD ~ Name }
  
 // Binary expressions
-Add = { NumLhs ~ ADD ~ NumRhs }
-Sub = { NumLhs ~ SUB ~ NumRhs }
-Mul = { NumLhs ~ MUL ~ NumRhs }
-Div = { NumLhs ~ DIV ~ NumRhs }
+Add = { NUM_LHS ~ ADD ~ NUM_RHS }
+Sub = { NUM_LHS ~ SUB ~ NUM_RHS }
+Mul = { NUM_LHS ~ MUL ~ NUM_RHS }
+Div = { NUM_LHS ~ DIV ~ NUM_RHS }
 
-Less = { Rhs ~ LESS ~ Rhs }
-LessEq = { Rhs ~ LESS_EQ ~ Rhs }
-More = {Rhs ~ MORE ~ Rhs }
-MoreEq = { Rhs ~ MORE_EQ ~ Rhs }
-EqCmp = { Rhs ~ EQUAL_CMP ~ Rhs }
+Less = { RHS ~ LESS ~ RHS }
+LessEq = { RHS ~ LESS_EQ ~ RHS }
+More = {RHS ~ MORE ~ RHS }
+MoreEq = { RHS ~ MORE_EQ ~ RHS }
+EqCmp = { RHS ~ EQUAL_CMP ~ RHS }
 
 // Compound expressions
+EXPR = _{ EXPRS ~ "." }
 EXPRS = _{ NESTED_EXPRS | SIMPLE_EXPRS }
 NESTED_EXPRS = _{ If | Else | ElseIf }
 SIMPLE_EXPRS = _{ Def | Assign | Print }
-Expr = _{ EXPRS ~ "." }
-IfExpr = _{ SIMPLE_EXPRS ~ "," }
+IFEXPR = _{ SIMPLE_EXPRS ~ "," }
+
 Op = { Add | Sub | Mul | Div }
 Cmp = { LessEq | Less | MoreEq | More | EqCmp }
-Def = { DEF ~ Name ~ (AS ~ Rhs)? }
-Assign = { Name ~ EQUAL ~ Rhs }
-Print = { PRINT ~ PrintRhs+ }
-If = { IF ~ Cmp ~ THEN ~ NEWLINE? ~ IfExpr* ~ SIMPLE_EXPRS }
-Else = { ELSE ~ THEN? ~ NEWLINE? ~ IfExpr* ~ SIMPLE_EXPRS }
-ElseIf = { ELSEIF ~ Cmp ~ THEN ~ IfExpr* ~ SIMPLE_EXPRS }
+Def = { DEF ~ Name ~ (AS ~ RHS)? }
+Assign = { Name ~ EQUAL ~ RHS }
+Print = { PRINT ~ PRINT_LHS+ }
+If = { IF ~ Cmp ~ THEN ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
+Else = { ELSE ~ THEN? ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
+ElseIf = { ELSEIF ~ Cmp ~ THEN ~ IFEXPR* ~ SIMPLE_EXPRS }
 
 // Errors
-Err = { NotDot | NotUpper }
+Err = { StrOp | NotDot | NotUpper }
 NotDot = { EXPRS ~ !("." | ",") }
 NotUpper = { !KEYWORD ~ ASCII_ALPHA_LOWER+ }
-//WrongToken = { Name ~ Name }
+// String ~ Operation | Operation ~ String
+StrOp = { (!STR ~ !("." | ",") ~ !NEWLINE ~ ANY)+ ~ STR ~ NUM_OPS ~ ANY* | (!NUM_OPS ~ !("." | ",") ~ !NEWLINE ~ ANY)+ ~ NUM_OPS ~ STR ~ ANY* }
 NotInit = { "UNREACHABLE" }

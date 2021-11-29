@@ -5,3 +5,5 @@ Si no pero Anys < 12: Escriu "Preu entrada: 14e".
 Si no pero Anys < 21: Escriu "Preu entrada: 16e".
 Si cap llavors Escriu "Preu entrada: 20e".
 
+A = 5
+

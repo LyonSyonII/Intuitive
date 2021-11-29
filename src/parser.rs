@@ -60,15 +60,16 @@ pub fn parse_file(file: &mut File) -> String {
     rustfmt_wrapper::rustfmt(out + "}").die("ERROR: Rustfmt could not format the input")
 }
 
-fn die(err: &str, line: u64, ctx: &str) -> ! {
-    die!("ERROR: {} {}\nContext: {}", err, line, ctx)
+fn die(err: &str, line: u64, corr: &str,ctx: &str) -> ! {
+    die!("\nERROR:   {} {}.{}\nContext: {}", err, line, corr, ctx)
 }
 
 fn check_errors(expr: Pair<Rule>, global: &Global) -> ! {
-    let _die = |err: &str| -> ! { die(err, global.line_num, expr.as_str()) };
-
+    let _die = |err: &str| -> ! { die(err, global.line_num, "",expr.as_str()) };
+    let _die_corr = |err: &str, corr: &str| -> !{ die(err, global.line_num, corr, expr.as_str())};
     match expr.as_rule() {
-        Rule::NotDot => _die("Expected dot at line"),
+        Rule::StrOp => _die_corr("Operation with string in line", "\n         Strings cannot be added, use formatting instead: Print \"The value of A is: \" A."),
+        Rule::NotDot => _die("Expected dot in line"),
         Rule::NotUpper => _die("Variable not starting with UPPERCASE letter in line"),
         _ => die!(),
     }
@@ -189,6 +190,7 @@ fn parse_op(mut pairs: Pairs<Rule>, global: &Global) -> (String, Rule) {
                     die(
                         "Variable not initialized in line",
                         global.line_num,
+                        "",
                         hs.as_str(),
                     )
                 });
@@ -218,6 +220,7 @@ fn parse_rhs(rhs: Pair<Rule>, global: &Global) -> (String, Rule) {
                 die(
                     "Variable not initialized in line",
                     global.line_num,
+                    "",
                     rhs.as_str(),
                 )
             });
