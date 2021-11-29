@@ -68,7 +68,7 @@ fn check_errors(expr: Pair<Rule>, global: &Global) -> ! {
     let _die = |err: &str| -> ! { die(err, global.line_num, "",expr.as_str()) };
     let _die_corr = |err: &str, corr: &str| -> !{ die(err, global.line_num, corr, expr.as_str())};
     match expr.as_rule() {
-        Rule::StrOp => _die_corr("Operation with string in line", "\n         Strings cannot be added, use formatting instead: Print \"The value of A is: \" A."),
+        Rule::StrOp => _die_corr("Operation with string in line", "\n         Strings cannot be added, use formatting instead: e.g. Print \"The value of A is: \" A."),
         Rule::NotDot => _die("Expected dot in line"),
         Rule::NotUpper => _die("Variable not starting with UPPERCASE letter in line"),
         _ => die!(),

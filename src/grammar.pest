@@ -97,7 +97,7 @@ COMMENT = _{ "(" ~ Comment ~ ")" }
 Name = @{ !KEYWORD ~ (ASCII_ALPHA_UPPER ~ (ASCII_ALPHA)*) }
 Float = @{ ASCII_DIGIT+ ~ "," ~ ASCII_DIGIT+ }
 Int = @{ "-"? ~ ASCII_DIGIT+ }
-FmtString = { (NUM | String | Name) ~ (NUM | String | Name)+ }
+FmtString = { (Op | NUM | String | Name) ~ (Op | NUM | String | Name)+ }
 String = @{ "\"" ~ (!"\"" ~ ANY)+ ~ "\"" }
 
 True = { ^"cert" | ^"true" }
@@ -107,7 +107,7 @@ VALUE = _{ NUM | STR }
 NUM = _{ Float | Int }
 STR = _{ FmtString | String }
 
-RHS = _{ Op | VALUE | Name }
+RHS = _{ STR | Op | NUM | Name }
 NUM_RHS = _{ Op | NUM | Name }
 LHS = _{ VALUE | Name }
 NUM_LHS = _{ NUM | Name }
