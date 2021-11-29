@@ -16,6 +16,7 @@ struct Parser;
 struct Global {
     variables: std::collections::HashMap<String, Rule>,
     line_num: u64,
+    line_str: String,
 }
 
 impl Global {
@@ -23,6 +24,7 @@ impl Global {
         Global {
             variables: std::collections::HashMap::new(),
             line_num: 1,
+            line_str: String::new(),
         }
     }
 }
@@ -60,7 +62,7 @@ pub fn parse_file(file: &mut File) -> String {
     rustfmt_wrapper::rustfmt(out + "}").die("ERROR: Rustfmt could not format the input")
 }
 
-fn die(err: &str, line: u64, corr: &str,ctx: &str) -> ! {
+fn die(err: &str, line: u64, corr: &str, ctx: &str) -> ! {
     die!("\nERROR:   {} {}.{}\nContext: {}", err, line, corr, ctx)
 }
 
@@ -68,7 +70,6 @@ fn check_errors(expr: Pair<Rule>, global: &Global) -> ! {
     let _die = |err: &str| -> ! { die(err, global.line_num, "",expr.as_str()) };
     let _die_corr = |err: &str, corr: &str| -> !{ die(err, global.line_num, corr, expr.as_str())};
     match expr.as_rule() {
-        Rule::StrOp => _die_corr("Operation with string in line", "\n         Strings cannot be added, use formatting instead: e.g. Print \"The value of A is: \" A."),
         Rule::NotDot => _die("Expected dot in line"),
         Rule::NotUpper => _die("Variable not starting with UPPERCASE letter in line"),
         _ => die!(),
@@ -77,6 +78,8 @@ fn check_errors(expr: Pair<Rule>, global: &Global) -> ! {
 
 fn parse_expr(expr: Pair<Rule>, global: &mut Global) -> String {
     println!("{:?}", global);
+    global.line_str = expr.as_str().into();
+    
     match expr.as_rule() {
         Rule::Err => check_errors(expr.into_inner().next().unwrap(), global),
         Rule::Newline => {
@@ -196,6 +199,7 @@ fn parse_op(mut pairs: Pairs<Rule>, global: &Global) -> (String, Rule) {
                 });
                 (hs, rule)
             }
+            Rule::String | Rule::FmtString => die("Operation with string in line", global.line_num, "\n         Strings cannot be added, use formatting instead: e.g. Print \"The value of A is: \" A.", &global.line_str),
             _ => (hs.as_str().into(), Rule::WHITESPACE),
         }
     };
@@ -221,7 +225,7 @@ fn parse_rhs(rhs: Pair<Rule>, global: &Global) -> (String, Rule) {
                     "Variable not initialized in line",
                     global.line_num,
                     "",
-                    rhs.as_str(),
+                    &global.line_str,
                 )
             });
             ret.into()

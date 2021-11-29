@@ -8,7 +8,6 @@ LINKER_EN = _{" " ~ ("than" | "is" | "to" | "also" | "of") ~ " "}
 LINKER_CAT = _{" " ~ ("es" | "és" | "a" | "que" | "compleix" | "també" | "tambe") ~ " "}
 LINKER = _{ LINKER_EN | LINKER_CAT | " " }
 
-
 KEYWORD = _{ EQUAL | EQUAL_CMP | ADD | SUB | MUL | DIV | LINKER | PRINT | IF | ELSE | ELSEIF | THEN | OR | LESS | MORE }
 
 DEF_EN = _{ ^"define" | ^"def" }
@@ -107,17 +106,18 @@ VALUE = _{ NUM | STR }
 NUM = _{ Float | Int }
 STR = _{ FmtString | String }
 
-RHS = _{ STR | Op | NUM | Name }
-NUM_RHS = _{ Op | NUM | Name }
+RHS = _{ Op | STR | NUM | Name }
 LHS = _{ VALUE | Name }
-NUM_LHS = _{ NUM | Name }
+NUM_LHS = _{ String | NUM | Name }
 PRINT_LHS = _{ Op | NUM | String | !KEYWORD ~ Name }
  
 // Binary expressions
-Add = { NUM_LHS ~ ADD ~ NUM_RHS }
-Sub = { NUM_LHS ~ SUB ~ NUM_RHS }
-Mul = { NUM_LHS ~ MUL ~ NUM_RHS }
-Div = { NUM_LHS ~ DIV ~ NUM_RHS }
+// CANVIAT NUM_RHS PER RHS
+// CANVIAT NUM_LHS PER LHS
+Add = { NUM_LHS ~ ADD ~ RHS }
+Sub = { NUM_LHS ~ SUB ~ RHS }
+Mul = { NUM_LHS ~ MUL ~ RHS }
+Div = { NUM_LHS ~ DIV ~ RHS }
 
 Less = { RHS ~ LESS ~ RHS }
 LessEq = { RHS ~ LESS_EQ ~ RHS }
@@ -142,9 +142,6 @@ Else = { ELSE ~ THEN? ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
 ElseIf = { ELSEIF ~ Cmp ~ THEN ~ IFEXPR* ~ SIMPLE_EXPRS }
 
 // Errors
-Err = { StrOp | NotDot | NotUpper }
+Err = { NotDot | NotUpper }
 NotDot = { EXPRS ~ !("." | ",") }
 NotUpper = { !KEYWORD ~ ASCII_ALPHA_LOWER+ }
-//StrOp = { (!STR ~ !("." | ",") ~ !NEWLINE ~ !PRINT ~ ANY)+ ~ STR ~ NUM_OPS ~ ANY* | (!NUM_OPS ~ !("." | ",") ~ !NEWLINE ~ !PRINT ~ ANY)+ ~ NUM_OPS ~ STR ~ ANY* }
-StrOp = @{ (!STR ~ !NEWLINE ~ ANY)* ~ NUM_OPS ~ " "* ~ STR ~ (!NEWLINE ~ ANY)* | (!STR ~ !NEWLINE ~ ANY)* ~ STR ~ " "* ~ NUM_OPS ~ (!NEWLINE ~ ANY)* }
-NotInit = { "UNREACHABLE" }

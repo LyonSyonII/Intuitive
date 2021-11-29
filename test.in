@@ -3,5 +3,5 @@ B = 10.
 C = 20.
 D = 15.
 
-E = A + B " " C + D. (Hauria de sortir 15 35)
+E = " " + B. 
 Print E. 
