@@ -9,7 +9,7 @@ LINKER_CAT = _{" " ~ ("es" | "és" | "a" | "que" | "compleix" | "també" | "tamb
 LINKER = _{ LINKER_EN | LINKER_CAT | " " }
 
 
-KEYWORD = _{ EQUAL | ADD | SUB | MUL | DIV | LINKER | PRINT | IF | ELSE | THEN | OR | LESS | MORE }
+KEYWORD = _{ EQUAL | EQUAL_CMP | ADD | SUB | MUL | DIV | LINKER | PRINT | IF | ELSE | ELSEIF | THEN | OR | LESS | MORE }
 
 DEF_EN = _{ ^"define" | ^"def" }
 DEF_CAT = _{ ^"defineix" }
@@ -96,7 +96,7 @@ COMMENT = _{ "(" ~ Comment ~ ")" }
 
 Name = @{ !KEYWORD ~ (ASCII_ALPHA_UPPER ~ (ASCII_ALPHA)*) }
 Float = @{ ASCII_DIGIT+ ~ "," ~ ASCII_DIGIT+ }
-Int = @{ ASCII_DIGIT+ }
+Int = @{ "-"? ~ ASCII_DIGIT+ }
 FmtString = { (NUM | String | Name) ~ (NUM | String | Name)+ }
 String = @{ "\"" ~ (!"\"" ~ ANY)+ ~ "\"" }
 
@@ -145,6 +145,6 @@ ElseIf = { ELSEIF ~ Cmp ~ THEN ~ IFEXPR* ~ SIMPLE_EXPRS }
 Err = { StrOp | NotDot | NotUpper }
 NotDot = { EXPRS ~ !("." | ",") }
 NotUpper = { !KEYWORD ~ ASCII_ALPHA_LOWER+ }
-// String ~ Operation | Operation ~ String
-StrOp = { (!STR ~ !("." | ",") ~ !NEWLINE ~ ANY)+ ~ STR ~ NUM_OPS ~ ANY* | (!NUM_OPS ~ !("." | ",") ~ !NEWLINE ~ ANY)+ ~ NUM_OPS ~ STR ~ ANY* }
+//StrOp = { (!STR ~ !("." | ",") ~ !NEWLINE ~ !PRINT ~ ANY)+ ~ STR ~ NUM_OPS ~ ANY* | (!NUM_OPS ~ !("." | ",") ~ !NEWLINE ~ !PRINT ~ ANY)+ ~ NUM_OPS ~ STR ~ ANY* }
+StrOp = @{ (!STR ~ !NEWLINE ~ ANY)* ~ NUM_OPS ~ " "* ~ STR ~ (!NEWLINE ~ ANY)* | (!STR ~ !NEWLINE ~ ANY)* ~ STR ~ " "* ~ NUM_OPS ~ (!NEWLINE ~ ANY)* }
 NotInit = { "UNREACHABLE" }
