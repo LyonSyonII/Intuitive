@@ -215,7 +215,7 @@ fn parse_rhs(rhs: Pair<Rule>, global: &Global) -> (String, Rule) {
     let mut rule = rhs.as_rule();
     let rhs = match rule {
         Rule::String => rhs.as_str().into(),
-        Rule::FmtString => parse_fmt_string(rhs.into_inner()),
+        Rule::FmtString => parse_fmt_string(rhs.into_inner(), global),
         Rule::Int => rhs.as_str().to_owned() + ".0",
         Rule::Float => rhs.as_str().replace(',', "."),
         Rule::Name => {
@@ -241,12 +241,21 @@ fn parse_rhs(rhs: Pair<Rule>, global: &Global) -> (String, Rule) {
     (rhs, rule)
 }
 
-fn parse_fmt_string(pairs: Pairs<Rule>) -> String {
+// TODO: Canviat pair.as_str per parse_op per trobar errors en la operacio
+
+fn parse_fmt_string(pairs: Pairs<Rule>, global: &Global) -> String {
     let mut lhs = String::from("format!(\"");
     let mut rhs = String::new();
     for pair in pairs {
         lhs += "{}";
-        rhs += &format!(", {}", pair.as_str());
+        //rhs += &format!(", {}", pair.as_str());
+        let expr = if pair.as_rule() == Rule::Op {
+        	parse_op(pair.into_inner(), global).0
+        }
+        else {
+        	pair.as_str().into()
+        };
+        rhs += &format!(", {}", expr);
     }
 
     format!("{}\"{})", lhs, rhs)
