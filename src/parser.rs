@@ -241,14 +241,11 @@ fn parse_rhs(rhs: Pair<Rule>, global: &Global) -> (String, Rule) {
     (rhs, rule)
 }
 
-// TODO: Canviat pair.as_str per parse_op per trobar errors en la operacio
-
 fn parse_fmt_string(pairs: Pairs<Rule>, global: &Global) -> String {
     let mut lhs = String::from("format!(\"");
     let mut rhs = String::new();
     for pair in pairs {
         lhs += "{}";
-        //rhs += &format!(", {}", pair.as_str());
         let expr = if pair.as_rule() == Rule::Op {
         	parse_op(pair.into_inner(), global).0
         }
