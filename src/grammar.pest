@@ -83,6 +83,10 @@ EQUAL_CMP_EN = _{ "equal" | "same" }
 EQUAL_CMP_CAT = _{ "igual" | "equivalent" | "mateix" }
 EQUAL_CMP = _{ EQUAL_CMP_EN | EQUAL_CMP_CAT | "==" | "=" }
 
+NOTEQ_EN = _{ ("not" ~ EQUAL_CMP_EN) | "different" }
+NOTEQ_CAT = _{ ("no" ~ EQUAL_CMP_CAT) | "diferent" }
+NOTEQ = _{ NOTEQ_EN | NOTEQ_CAT | "!=" | "!==" }
+
 // Or used in logical expressions (e.g: if A > 5 OR A < 0 )
 OR = _{ OR_LM_EQ | "||" }
 // And used in logical expressions (e.g: if A > 5 AND A < 0)
@@ -93,6 +97,10 @@ AND = _{ AND_EN | AND_CAT | "&&" }
 PRINT_EN = _{ ^"print" | ^"write" }
 PRINT_CAT = _{^"imprimeix" | ^"imprimir" | ^"escriu" }
 PRINT = _{ PRINT_EN | PRINT_CAT }
+
+READ_EN = _{ ^"read" | ^"input" }
+READ_CAT = _{ ^"llegeix" | ^"introdueix" }
+READ = _{ READ_EN | READ_CAT }
 
 IF_EN = _{ ^"if" }
 IF_CAT = _{ ^"si" }
@@ -138,13 +146,14 @@ TYINT_EN = _{ ^"integer" | ^"integers" | ^"ints" | ^"int" }
 TYINT_CAT = _{ ^"enter" | ^"enters" }
 TypeInt = { TYINT_EN | TYINT_CAT }
 
-TYFLOAT_EN = _{ ^"reals" | ^"real" | ^"decimal" | ^"decimals" | ^"floats" | ^"float" | ^"numbers" | ^"nums"}
+TYFLOAT_EN = _{ ^"reals" | ^"real" | ^"decimal" | ^"decimals" | ^"floats" | ^"float" | ^"numbers" | ^"nums" | ^"num" }
 TYFLOAT_CAT = _{ ^"flotants" | ^"flotants" | ^"numeros" | ^"números" | ^"núms" | ^"nombres"}
 TypeFloat = { TYFLOAT_EN | TYFLOAT_CAT }
 
 TYSTR_EN = _{ ^"words" | ^"word" | ^"strings" | ^"string" }
 TYSTR_CAT = _{ ^"paraules" | ^"paraula" }
 TypeStr = { TYSTR_EN | TYSTR_CAT }
+
 TYPE = _{ TypeInt | TypeFloat | TypeStr }
 
 // Lists
@@ -167,37 +176,43 @@ Sub = { LHS ~ LINKER* ~ SUB ~ LINKER* ~ RHS }
 Mul = { LHS ~ LINKER* ~ MUL ~ LINKER* ~ RHS }
 Div = { LHS ~ LINKER* ~ DIV ~ LINKER* ~ RHS }
 
-AddEq = ${ ADD_EQ ~ " "+ ~ RHS ~ " "+ ~ TO ~ " "+ ~ Name }
-SubEq = ${ SUB_EQ ~ " "+ ~ RHS ~ " "+ ~ SUB_TO ~ " "+ ~ Name }
-MulEq = ${ MUL_EQ ~ " "+ ~ Name ~ " "+ ~ BY ~ " "+ ~ RHS }
-DivEq = ${ DIV_EQ ~ " "+ ~ Name ~ " "+ ~ DIV_BY ~ " "+ ~ RHS }
-
 And = { LHS ~ LINKER* ~ AND ~ LINKER* ~ RHS }
 Or = { LHS ~ LINKER* ~ OR ~ LINKER* ~ RHS }
+
 Lower = { LHS ~ LOWER ~ RHS }
 LowEq = { LHS ~ LOW_EQ ~ RHS }
 Greater = { LHS ~ GREATER ~ RHS }
 GreatEq = { LHS ~ GREAT_EQ ~ RHS }
 EqCmp = { LHS ~ EQUAL_CMP ~ RHS }
+NotEq = { LHS ~ NOTEQ ~ RHS }
+
+AddEq = ${ ADD_EQ ~ " "+ ~ RHS ~ " "+ ~ TO ~ " "+ ~ Name }
+SubEq = ${ SUB_EQ ~ " "+ ~ RHS ~ " "+ ~ SUB_TO ~ " "+ ~ Name }
+MulEq = ${ MUL_EQ ~ " "+ ~ Name ~ " "+ ~ BY ~ " "+ ~ RHS }
+DivEq = ${ DIV_EQ ~ " "+ ~ Name ~ " "+ ~ DIV_BY ~ " "+ ~ RHS }
 
 // Compound expressions
 EXPR = _{ EXPRS ~ "." }
 EXPRS = _{ NESTED_EXPRS | SIMPLE_EXPRS }
 NESTED_EXPRS = _{ If | Else | ElseIf }
-SIMPLE_EXPRS = _{ Def | Assign | Print | AddEq | SubEq | MulEq | DivEq | List }
+SIMPLE_EXPRS = _{ Def | Assign | Print | Read | AddEq | SubEq | MulEq | DivEq | List }
 IFEXPR = _{ SIMPLE_EXPRS ~ "," }
 
 Op = { Add | Sub | Mul | Div | And | Or }
-CMPS = _{ LowEq | Lower | GreatEq | Greater | EqCmp }
-Cmp = { CMPS }
+Cmp = { LowEq | Lower | GreatEq | Greater | EqCmp | NotEq }
 Def = { DEF ~ Name ~ (AS ~ RHS)? }
 Assign = { Name ~ EQUAL ~ RHS }
 Print = { PRINT ~ PRINT_LHS+ }
+Read = { READ ~ String? ~ Name ~ (AS ~ TYPE)? }
 If = { IF ~ Cmp ~ THEN ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
 Else = { ELSE ~ THEN? ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
 ElseIf = { ELSEIF ~ Cmp ~ THEN ~ IFEXPR* ~ SIMPLE_EXPRS }
 
 // Errors
-Err = { NotDot | NotUpper }
+Err = { NotUpper | NotVarRead | ReadFmtStr | NotDot | EmptyStr }
+EmptyStr = { (!"\"" ~ ANY)* ~ "\"\"" ~ ANY* }
 NotDot = { EXPRS ~ !("." | ",") }
 NotUpper = { !KEYWORD ~ ASCII_ALPHA_LOWER+ }
+NotVarRead = {  READ ~ !Name ~ !FmtString ~ RHS ~ (AS ~ TYPE)? }
+READ_FMT_STR = _{ String ~ (String | Name) ~ (String | Name) ~ ANY* | Name ~ (String | Name) ~ ANY* }
+ReadFmtStr = { READ ~ READ_FMT_STR ~ (AS ~ TYPE)? }

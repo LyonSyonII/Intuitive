@@ -50,7 +50,7 @@ pub fn parse_file(file: &mut File) -> String {
     let parse = Parser::parse(Rule::MAIN, &inp).die("Error parsing the file");
 
     let mut out: String =
-        "#[allow(non_snake_case)]\n#[allow(unused_variables)]\n#[allow(unused_mut)]\n#[allow(unused_assignments)]\nfn main() {"
+        "#[allow(non_snake_case)]\n#[allow(dead_code)]\n#[allow(unused_variables)]\n#[allow(unused_mut)]\n#[allow(unused_assignments)]\nfn main() {"
             .into();
     
     let mut global = Global::new();
@@ -59,19 +59,27 @@ pub fn parse_file(file: &mut File) -> String {
     }
 
     //out + "}"
-    rustfmt_wrapper::rustfmt(out + "}").die("ERROR: Rustfmt could not format the input")
+    rustfmt_wrapper::rustfmt(out + "}" + include_str!("read_fn.txt")).die("ERROR: Rustfmt could not format the input")
 }
 
-fn die(err: &str, line: u64, corr: &str, ctx: &str) -> ! {
-    die!("\nERROR:   {} {}.{}\nContext: {}", err, line, corr, ctx)
+
+fn die(err: &str, line: u64, ctx: &str) -> ! {
+    die!("\nERROR:   {} {}.\nContext: {}", err, line, ctx) 
+}
+
+fn die_corr(err: &str, line: u64, corr: &str, ctx: &str) -> ! {
+    die!("\nERROR:   {} {}.\n         {}\nContext: {}", err, corr, line, ctx)
 }
 
 fn check_errors(expr: Pair<Rule>, global: &Global) -> ! {
-    let _die = |err: &str| -> ! { die(err, global.line_num, "",expr.as_str()) };
-    let _die_corr = |err: &str, corr: &str| -> !{ die(err, global.line_num, corr, expr.as_str())};
+    let _die = |err: &str| -> ! { die(err, global.line_num,expr.as_str()) };
+    let _die_corr = |err: &str, corr: &str| -> !{ die_corr(err, global.line_num, corr, expr.as_str())};
     match expr.as_rule() {
+        Rule::EmptyStr => _die_corr("Empty string in line", "Strings cannot be empty"),
         Rule::NotDot => _die("Expected dot in line"),
         Rule::NotUpper => _die("Variable not starting with UPPERCASE letter in line"),
+        Rule::NotVarRead => _die_corr("Incorrect read in line", "Only variables can be read"),
+        Rule::ReadFmtStr => _die_corr("Printing more than one String in Read in line", "You can only print one message on Read, if you want to print an elaborate message, use a Print before."),
         _ => die!(),
     }
 }
@@ -151,6 +159,40 @@ fn parse_print(pairs: Pairs<Rule>, global: &Global) -> String {
     format!("{}\"{});", lhs, rhs)
 }
 
+fn parse_read(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
+    let pair = pairs.next().unwrap();
+    let (message, name) = if pair.as_rule() == Rule::String {
+        (format!("print!({});\n", pair.as_str()), pairs.next().unwrap().as_str())
+    }
+    else {
+        (String::new(), pair.as_str())
+    };
+    
+    if let Some(ty) = pairs.next() {
+        let rule = ty.as_rule();
+        let ty = match rule {
+            Rule::TypeInt => "i64",
+            Rule::TypeFloat => "f64",
+            Rule::TypeStr => "String",
+            _ => "",
+        };
+        
+        global.variables.insert(name.into(), type_to_rule(rule));
+        format!("{}let {} = read::<{}>();", message, name, ty)
+    }
+    else {
+        if global.variables.get(name).is_none() {
+            die(
+                "Trying to Read into non initialized variable in line",
+                global.line_num,
+                &global.line_str,
+            )
+        }
+
+        format!("{}{} = read();", message, name)
+    }
+}
+
 fn parse_if(rule: Rule, mut pairs: Pairs<Rule>, global: &mut Global) -> String {
     let mut lhs = String::new();
     if rule != Rule::If {
@@ -158,13 +200,6 @@ fn parse_if(rule: Rule, mut pairs: Pairs<Rule>, global: &mut Global) -> String {
     }
 
     if rule != Rule::Else {
-        let mut cmp = String::new();
-        for pair in pairs.next().unwrap().into_inner() {
-            cmp += &match pair.as_rule() {
-                Rule::And | Rule::Or => pair.as_str().into(),
-                _ => parse_op(pair.into_inner(), global).0
-            }
-        }
         lhs += &format!(
             "if {}",
             parse_op(pairs.next().unwrap().into_inner(), &global).0
@@ -212,10 +247,10 @@ fn parse_list(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
         else if rule == Rule::Float && ty == Rule::Int { rule = Rule::Int }
 
         if rule != ty {
-            die(
+            die_corr(
                 &format!("Variable of type {:?} in a list of type {:?} in line", rule, ty),
                 global.line_num,
-                "\n         Lists can only contain elements of the same type.\n",
+                "Lists can only contain elements of the same type.\n",
                 &global.line_str,
             )
         }
@@ -239,12 +274,14 @@ fn parse_op(mut pairs: Pairs<Rule>, global: &Global) -> (String, Rule) {
         Rule::Greater => ">",
         Rule::GreatEq => ">=",
         Rule::EqCmp => "==",
+        Rule::NotEq => "!=",
         Rule::And => "&&",
         Rule::Or => "||",
         _ => "",
     };
 
     let parse_side = |hs: Pair<Rule>| -> (String, Rule) {
+        /*
         match hs.as_rule() {
             Rule::Op | Rule::Cmp => parse_op(hs.into_inner(), &global),
             Rule::Int => (hs.as_str().to_owned() + ".0", Rule::Int),
@@ -255,14 +292,17 @@ fn parse_op(mut pairs: Pairs<Rule>, global: &Global) -> (String, Rule) {
                     die(
                         "Variable not initialized in line",
                         global.line_num,
-                        "",
                         hs.as_str(),
                     )
                 });
                 (hs, rule)
             }
-            Rule::String | Rule::FmtString => die("Operation with string in line", global.line_num, "\n         Strings cannot be added, use formatting instead: e.g. Print \"The value of A is: \" A.", &global.line_str),
             _ => (hs.as_str().into(), Rule::WHITESPACE),
+        }
+         */
+        match hs.as_rule() {
+            Rule::String | Rule::FmtString => die_corr("Operation with string in line", global.line_num, "Strings cannot be added, use formatting instead: e.g. Print \"The value of A is: \" A.", &global.line_str),
+            _ => parse_rhs(hs, global)
         }
     };
 
@@ -284,15 +324,14 @@ fn parse_rhs(rhs: Pair<Rule>, global: &Global) -> (String, Rule) {
             let ret = rhs.as_str().into();
             rule = *global.variables.get(ret).unwrap_or_else(|| {
                 die(
-                    "Variable not initialized in line",
+                    &format!("Variable \"{}\" not initialized in line", ret),
                     global.line_num,
-                    "",
                     &global.line_str,
                 )
             });
             ret.into()
         }
-        Rule::Op => {
+        Rule::Op | Rule::Cmp => {
             let ret = parse_op(rhs.into_inner(), &global);
             rule = ret.1;
             ret.0
@@ -318,4 +357,13 @@ fn parse_fmt_string(pairs: Pairs<Rule>, global: &Global) -> String {
     }
 
     format!("{}\"{})", lhs, rhs)
+}
+
+fn type_to_rule(ty: Rule) -> Rule {
+    match ty {
+        Rule::TypeInt => Rule::Int,
+        Rule::TypeFloat => Rule::Float,
+        Rule::TypeStr => Rule::String,
+        _ => Rule::Err,
+    }
 }

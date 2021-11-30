@@ -1,13 +1,4 @@
-A = 5.
-Print "A = " 5.
-B = 6.
-Print "B = " 6,0.
-C = A + B.
-Print "C = " A + B.
+Read "Input A: " A as Num.
+Read "Input B: " B as Num.
 
-List of Ints: A, 5,5, C.
-
-Print "List: " List.
-Print "A: " A. 
-Print "B: " B. 
-Print "C: " C. 
+If A < B && B != 10: Print "Hey, it worked!".
