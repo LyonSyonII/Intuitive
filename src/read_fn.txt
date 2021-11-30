@@ -1,0 +1,18 @@
+
+fn read<U: std::str::FromStr>() -> U {
+    use std::io::stdin;
+    let mut inp = String::new();
+    // Reads the input from STDIN and places it in the String named input.
+    stdin().read_line(&mut inp).expect("Failed to read input.");
+        
+    // Convert to another type.
+    // If successful, bind to a new variable named input.
+    // If failed, restart the loop.
+    match inp.trim().parse::<U>() {
+        Ok(inp) => inp,
+        Err(_) => {
+            println!("Input is not of specified type, enter it again.");
+            read::<U>()
+        },
+    }
+}
