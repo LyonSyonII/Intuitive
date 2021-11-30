@@ -97,6 +97,7 @@ fn parse_expr(expr: Pair<Rule>, global: &mut Global) -> String {
         Rule::SubEq => parse_op_eq("-=", true, expr.into_inner(), global),
         Rule::MulEq => parse_op_eq("*=", false, expr.into_inner(), global),
         Rule::DivEq => parse_op_eq("/=", false, expr.into_inner(), global),
+        Rule::List => parse_list(expr.into_inner(), global),
         _ => String::new(),
     }
 }
@@ -136,14 +137,15 @@ fn parse_print(pairs: Pairs<Rule>, global: &Global) -> String {
     let mut lhs = String::from("println!(\"");
     let mut rhs = String::new();
     for pair in pairs {
-        lhs += "{}";
-        let pair = match pair.as_rule() {
-            Rule::Name | Rule::Int | Rule::String => pair.as_str().into(),
-            Rule::Float => pair.as_str().replace(',', "."),
-            Rule::Op => parse_op(pair.into_inner(), &global).0,
-            _ => "".into(),
-        };
-        rhs = format!("{}, {}", rhs, pair);
+        let (ret, rule) = parse_rhs(pair, global);
+        if rule == Rule::ListInt || rule == Rule::ListFloat || rule == Rule::ListStr {
+            lhs += "{:?}";
+        }
+        else {
+            lhs += "{}";
+        }
+
+        rhs = format!("{}, {}", rhs, ret);
     }
 
     format!("{}\"{});", lhs, rhs)
@@ -183,6 +185,39 @@ fn parse_op_eq(sym: &str, reverse: bool, mut pairs: Pairs<Rule>, global: &mut Gl
     };
 
     format!("{} {} {};", name, sym, rhs)
+}
+
+fn parse_list(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
+    let name = pairs.next().unwrap().as_str();
+    let list_ty = pairs.next().unwrap().as_rule();
+    let ty = match list_ty {
+        Rule::ListInt => Rule::Int,
+        Rule::ListFloat => Rule::Float,
+        Rule::ListStr => Rule::String,
+        _ => Rule::Err,
+    };
+    
+    let mut rhs = String::new();
+    for elem in pairs {
+        let (ret, mut rule) = parse_rhs(elem, global); 
+        if rule == Rule::FmtString { rule = Rule::String }
+        else if rule == Rule::Int && ty == Rule::Float { rule = Rule::Float }
+        else if rule == Rule::Float && ty == Rule::Int { rule = Rule::Int }
+
+        if rule != ty {
+            die(
+                &format!("Variable of type {:?} in a list of type {:?} in line", rule, ty),
+                global.line_num,
+                "\n         Lists can only contain elements of the same type.\n",
+                &global.line_str,
+            )
+        }
+        
+        rhs += &format!("{}, ", ret);
+    }
+    
+    global.variables.insert(name.into(), list_ty);
+    format!("let {} = Vec::from([{}]);", name, rhs)
 }
 
 fn parse_op(mut pairs: Pairs<Rule>, global: &Global) -> (String, Rule) {

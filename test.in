@@ -1,14 +1,13 @@
 A = 5.
-Print "A: "A.
+Print "A = " 5.
+B = 6.
+Print "B = " 6,0.
+C = A + B.
+Print "C = " A + B.
 
-Add 10 to A.
-Print "A + 10 = " A.
+List of Ints: A, 5,5, C.
 
-Substract 12 from A.
-Print "A - 12 = " A.
-
-Multiply A by 3.
-Print "A * 3 = " A.
-
-Divide A by 2.
-Print "A / 2 = " A.
+Print "List: " List.
+Print "A: " A. 
+Print "B: " B. 
+Print "C: " C. 

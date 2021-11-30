@@ -4,8 +4,8 @@ NOTHING = _{ WHITESPACE | "" }
 Newline = { NEWLINE }
 
 // Synonyms
-LINKER_EN = _{" " ~ ("than" | "is" | "to" | "also" | "of") ~ " "}
-LINKER_CAT = _{" " ~ ("es" | "és" | "a" | "que" | "compleix" | "també" | "tambe") ~ " "}
+LINKER_EN = _{ " " ~ ("than" | "is" | "to" | "also" | "of") ~ " " }
+LINKER_CAT = _{ " " ~ ("es" | "és" | "a" | "que" | "compleix" | "també" | "tambe") ~ " " }
 LINKER = _{ LINKER_EN | LINKER_CAT | " " }
 
 KEYWORD = _{ EQUAL | EQUAL_CMP | ADD | SUB | MUL | DIV | LINKER | PRINT | IF | ELSE | ELSEIF | THEN | OR | LOWER | GREATER }
@@ -117,26 +117,51 @@ MAIN = _{ NOTHING ~ (Err | EXPR | COMMENT | Newline)* ~ NOTHING }
 Comment = { (!("(" | ")") ~ ANY)* }
 COMMENT = _{ "(" ~ Comment ~ ")" }
 
+// Variables
 Name = @{ !KEYWORD ~ (ASCII_ALPHA_UPPER ~ (ASCII_ALPHA)*) }
 Float = @{ ASCII_DIGIT+ ~ "," ~ ASCII_DIGIT+ }
 Int = @{ "-"? ~ ASCII_DIGIT+ }
 FmtString = { (Op | NUM | String | Name) ~ (Op | NUM | String | Name)+ }
 String = @{ "\"" ~ (!"\"" ~ ANY)+ ~ "\"" }
-
-True = { ^"cert" | ^"true" }
-False = { ^"fals" | ^"false" }
+TRUE_EN = _{ ^"true" }
+TRUE_CAT = _{ ^"cert" | ^"certa" }
+True = { TRUE_EN | TRUE_CAT }
+FALSE_EN = _{ ^"false" }
+FALSE_CAT = _{ ^"fals" | ^"falsa" }
+False = { FALSE_EN | FALSE_CAT }
 
 VALUE = _{ NUM | STR }
 NUM = _{ Float | Int }
 STR = _{ FmtString | String }
 
+// Lists
+MADEOF_EN = _{ "made of" | "formed by" | "of" }
+MADEOF_CAT = _{ "feta de"| "formada per" | "de" | "d'" }
+MADEOF = _{ MADEOF_EN | MADEOF_CAT }
+
+LISTINT_EN = _{ ^"integer" | ^"integers" | ^"ints" | ^"int" }
+LISTINT_CAT = _{ ^"enter" | ^"enters" }
+ListInt = { LISTINT_EN | LISTINT_CAT }
+
+LISTFLOAT_EN = _{ ^"reals" | ^"real" | ^"decimal" | ^"decimals" | ^"floats" | ^"float" }
+LISTFLOAT_CAT = _{ ^"flotants" | ^"flotants" }
+ListFloat = { LISTFLOAT_EN | LISTFLOAT_CAT }
+
+LISTSTR_EN = _{ ^"words" | ^"word" | ^"strings" | ^"string" }
+LISTSTR_CAT = _{ ^"paraules" | ^"paraula" }
+ListStr = { LISTSTR_EN | LISTSTR_CAT }
+
+LIST_TYPE = _{ ListInt | ListFloat | ListStr }
+LIST_COMM = _{ Name ~ " "* ~ MADEOF ~ WHITESPACE? ~ LIST_TYPE ~ ":" ~ WHITESPACE? ~ (RHS ~ "," ~ WHITESPACE?)* ~ RHS }
+LIST_DASH = _{ Name ~ " "* ~ MADEOF ~ WHITESPACE? ~ LIST_TYPE ~ ":" ~ WHITESPACE? ~ NEWLINE ~ ("-" ~ ">"? ~ WHITESPACE? ~ RHS ~ NEWLINE)* ~ "-" ~ ">"? ~ WHITESPACE? ~ RHS ~ NEWLINE? }
+List = ${ LIST_COMM | LIST_DASH }
+
+// Expr sides
 RHS = _{ Op | STR | NUM | Name }
 LHS = _{ String | NUM | Name }
 PRINT_LHS = _{ Op | NUM | String | !KEYWORD ~ Name }
  
 // Binary expressions
-// CANVIAT NUM_RHS PER RHS
-// CANVIAT LHS PER LHS
 Add = { LHS ~ LINKER* ~ ADD ~ LINKER* ~ RHS }
 Sub = { LHS ~ LINKER* ~ SUB ~ LINKER* ~ RHS }
 Mul = { LHS ~ LINKER* ~ MUL ~ LINKER* ~ RHS }
@@ -157,7 +182,7 @@ EqCmp = { RHS ~ EQUAL_CMP ~ RHS }
 EXPR = _{ EXPRS ~ "." }
 EXPRS = _{ NESTED_EXPRS | SIMPLE_EXPRS }
 NESTED_EXPRS = _{ If | Else | ElseIf }
-SIMPLE_EXPRS = _{ Def | Assign | Print | AddEq | SubEq | MulEq | DivEq }
+SIMPLE_EXPRS = _{ Def | Assign | Print | AddEq | SubEq | MulEq | DivEq | List }
 IFEXPR = _{ SIMPLE_EXPRS ~ "," }
 
 Op = { Add | Sub | Mul | Div }
