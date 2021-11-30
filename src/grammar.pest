@@ -85,7 +85,6 @@ EQUAL_CMP = _{ EQUAL_CMP_EN | EQUAL_CMP_CAT | "==" | "=" }
 
 // Or used in logical expressions (e.g: if A > 5 OR A < 0 )
 OR = _{ OR_LM_EQ | "||" }
-
 // And used in logical expressions (e.g: if A > 5 AND A < 0)
 AND_EN = _{ "and" }
 AND_CAT = _{ "i" }
@@ -134,30 +133,31 @@ VALUE = _{ NUM | STR }
 NUM = _{ Float | Int }
 STR = _{ FmtString | String }
 
+// Types
+TYINT_EN = _{ ^"integer" | ^"integers" | ^"ints" | ^"int" }
+TYINT_CAT = _{ ^"enter" | ^"enters" }
+TypeInt = { TYINT_EN | TYINT_CAT }
+
+TYFLOAT_EN = _{ ^"reals" | ^"real" | ^"decimal" | ^"decimals" | ^"floats" | ^"float" | ^"numbers" | ^"nums"}
+TYFLOAT_CAT = _{ ^"flotants" | ^"flotants" | ^"numeros" | ^"números" | ^"núms" | ^"nombres"}
+TypeFloat = { TYFLOAT_EN | TYFLOAT_CAT }
+
+TYSTR_EN = _{ ^"words" | ^"word" | ^"strings" | ^"string" }
+TYSTR_CAT = _{ ^"paraules" | ^"paraula" }
+TypeStr = { TYSTR_EN | TYSTR_CAT }
+TYPE = _{ TypeInt | TypeFloat | TypeStr }
+
 // Lists
 MADEOF_EN = _{ "made of" | "formed by" | "of" }
 MADEOF_CAT = _{ "feta de"| "formada per" | "de" | "d'" }
 MADEOF = _{ MADEOF_EN | MADEOF_CAT }
 
-LISTINT_EN = _{ ^"integer" | ^"integers" | ^"ints" | ^"int" }
-LISTINT_CAT = _{ ^"enter" | ^"enters" }
-ListInt = { LISTINT_EN | LISTINT_CAT }
-
-LISTFLOAT_EN = _{ ^"reals" | ^"real" | ^"decimal" | ^"decimals" | ^"floats" | ^"float" }
-LISTFLOAT_CAT = _{ ^"flotants" | ^"flotants" }
-ListFloat = { LISTFLOAT_EN | LISTFLOAT_CAT }
-
-LISTSTR_EN = _{ ^"words" | ^"word" | ^"strings" | ^"string" }
-LISTSTR_CAT = _{ ^"paraules" | ^"paraula" }
-ListStr = { LISTSTR_EN | LISTSTR_CAT }
-
-LIST_TYPE = _{ ListInt | ListFloat | ListStr }
-LIST_COMM = _{ Name ~ " "* ~ MADEOF ~ WHITESPACE? ~ LIST_TYPE ~ ":" ~ WHITESPACE? ~ (RHS ~ "," ~ WHITESPACE?)* ~ RHS }
-LIST_DASH = _{ Name ~ " "* ~ MADEOF ~ WHITESPACE? ~ LIST_TYPE ~ ":" ~ WHITESPACE? ~ NEWLINE ~ ("-" ~ ">"? ~ WHITESPACE? ~ RHS ~ NEWLINE)* ~ "-" ~ ">"? ~ WHITESPACE? ~ RHS ~ NEWLINE? }
+LIST_COMM = _{ Name ~ " "* ~ MADEOF ~ WHITESPACE? ~ TYPE ~ ":" ~ WHITESPACE? ~ (RHS ~ "," ~ WHITESPACE?)* ~ RHS }
+LIST_DASH = _{ Name ~ " "* ~ MADEOF ~ WHITESPACE? ~ TYPE ~ ":" ~ WHITESPACE? ~ NEWLINE ~ ("-" ~ ">"? ~ WHITESPACE? ~ RHS ~ NEWLINE)* ~ "-" ~ ">"? ~ WHITESPACE? ~ RHS ~ NEWLINE? }
 List = ${ LIST_COMM | LIST_DASH }
 
 // Expr sides
-RHS = _{ Op | STR | NUM | Name }
+RHS = _{ Op | Cmp | STR | NUM | Name }
 LHS = _{ String | NUM | Name }
 PRINT_LHS = _{ Op | NUM | String | !KEYWORD ~ Name }
  
@@ -172,11 +172,13 @@ SubEq = ${ SUB_EQ ~ " "+ ~ RHS ~ " "+ ~ SUB_TO ~ " "+ ~ Name }
 MulEq = ${ MUL_EQ ~ " "+ ~ Name ~ " "+ ~ BY ~ " "+ ~ RHS }
 DivEq = ${ DIV_EQ ~ " "+ ~ Name ~ " "+ ~ DIV_BY ~ " "+ ~ RHS }
 
-Lower = { RHS ~ LOWER ~ RHS }
-LowEq = { RHS ~ LOW_EQ ~ RHS }
-Greater = {RHS ~ GREATER ~ RHS }
-GreatEq = { RHS ~ GREAT_EQ ~ RHS }
-EqCmp = { RHS ~ EQUAL_CMP ~ RHS }
+And = { LHS ~ LINKER* ~ AND ~ LINKER* ~ RHS }
+Or = { LHS ~ LINKER* ~ OR ~ LINKER* ~ RHS }
+Lower = { LHS ~ LOWER ~ RHS }
+LowEq = { LHS ~ LOW_EQ ~ RHS }
+Greater = { LHS ~ GREATER ~ RHS }
+GreatEq = { LHS ~ GREAT_EQ ~ RHS }
+EqCmp = { LHS ~ EQUAL_CMP ~ RHS }
 
 // Compound expressions
 EXPR = _{ EXPRS ~ "." }
@@ -185,8 +187,9 @@ NESTED_EXPRS = _{ If | Else | ElseIf }
 SIMPLE_EXPRS = _{ Def | Assign | Print | AddEq | SubEq | MulEq | DivEq | List }
 IFEXPR = _{ SIMPLE_EXPRS ~ "," }
 
-Op = { Add | Sub | Mul | Div }
-Cmp = { LowEq | Lower | GreatEq | Greater | EqCmp }
+Op = { Add | Sub | Mul | Div | And | Or }
+CMPS = _{ LowEq | Lower | GreatEq | Greater | EqCmp }
+Cmp = { CMPS }
 Def = { DEF ~ Name ~ (AS ~ RHS)? }
 Assign = { Name ~ EQUAL ~ RHS }
 Print = { PRINT ~ PRINT_LHS+ }

@@ -138,7 +138,7 @@ fn parse_print(pairs: Pairs<Rule>, global: &Global) -> String {
     let mut rhs = String::new();
     for pair in pairs {
         let (ret, rule) = parse_rhs(pair, global);
-        if rule == Rule::ListInt || rule == Rule::ListFloat || rule == Rule::ListStr {
+        if rule == Rule::TypeInt || rule == Rule::TypeFloat || rule == Rule::TypeStr {
             lhs += "{:?}";
         }
         else {
@@ -158,6 +158,13 @@ fn parse_if(rule: Rule, mut pairs: Pairs<Rule>, global: &mut Global) -> String {
     }
 
     if rule != Rule::Else {
+        let mut cmp = String::new();
+        for pair in pairs.next().unwrap().into_inner() {
+            cmp += &match pair.as_rule() {
+                Rule::And | Rule::Or => pair.as_str().into(),
+                _ => parse_op(pair.into_inner(), global).0
+            }
+        }
         lhs += &format!(
             "if {}",
             parse_op(pairs.next().unwrap().into_inner(), &global).0
@@ -191,9 +198,9 @@ fn parse_list(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
     let name = pairs.next().unwrap().as_str();
     let list_ty = pairs.next().unwrap().as_rule();
     let ty = match list_ty {
-        Rule::ListInt => Rule::Int,
-        Rule::ListFloat => Rule::Float,
-        Rule::ListStr => Rule::String,
+        Rule::TypeInt => Rule::Int,
+        Rule::TypeFloat => Rule::Float,
+        Rule::TypeStr => Rule::String,
         _ => Rule::Err,
     };
     
@@ -232,12 +239,14 @@ fn parse_op(mut pairs: Pairs<Rule>, global: &Global) -> (String, Rule) {
         Rule::Greater => ">",
         Rule::GreatEq => ">=",
         Rule::EqCmp => "==",
+        Rule::And => "&&",
+        Rule::Or => "||",
         _ => "",
     };
 
     let parse_side = |hs: Pair<Rule>| -> (String, Rule) {
         match hs.as_rule() {
-            Rule::Op => parse_op(hs.into_inner(), &global),
+            Rule::Op | Rule::Cmp => parse_op(hs.into_inner(), &global),
             Rule::Int => (hs.as_str().to_owned() + ".0", Rule::Int),
             Rule::Float => (hs.as_str().replace(',', "."), Rule::Float),
             Rule::Name => {
