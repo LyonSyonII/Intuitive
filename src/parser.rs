@@ -102,15 +102,11 @@ fn die_corr(err: &str, corr: &str, global: &mut Global) -> String {
         global.line_str.replace('\n', "\n         "),
         color::DEFAULT
     );
-
+    
     String::new()
 }
 
 fn check_errors(expr: Pair<Rule>, global: &mut Global) -> String {
-    let mut _die = |err: &str| -> String { die(err, global) };
-    let mut _die_corr =
-        |err: &str, corr: &str| -> String { die_corr(err, corr, global) };
-
     match expr.as_rule() {
         Rule::EmptyStr => die_corr("Empty string in line", "Strings cannot be empty", global),
         Rule::NotDot => die("Expected dot in line", global),
@@ -124,7 +120,7 @@ fn check_errors(expr: Pair<Rule>, global: &mut Global) -> String {
 }
 
 fn parse_expr(expr: Pair<Rule>, global: &mut Global) -> String {
-    println!("{:?}", global);
+    println!("{:#?}", global);
     global.line_str = expr.as_str().into();
 
     match expr.as_rule() {
@@ -285,6 +281,8 @@ fn parse_list(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
         let (ret, mut rule) = parse_rhs(elem, global);
         if rule == Rule::FmtString {
             rule = Rule::String
+        } else if rule == Rule::Newline {
+            continue;
         }
 
         if !is_same_type(rule, ty) {
@@ -363,6 +361,7 @@ fn parse_op(mut pairs: Pairs<Rule>, global: &mut Global) -> (String, Rule) {
 fn parse_rhs(rhs: Pair<Rule>, global: &mut Global) -> (String, Rule) {
     let mut rule = rhs.as_rule();
     let rhs = match rule {
+        Rule::Newline => { global.line_num += 1; String::new()}
         Rule::String => rhs.as_str().into(),
         Rule::FmtString => parse_fmt_string(rhs.into_inner(), global),
         Rule::Int => rhs.as_str().to_owned() + ".0",

@@ -119,7 +119,7 @@ THEN_CAT = _{ "llavors" }
 THEN = _{ (THEN_EN | THEN_CAT) ~ ":"? | ":" }
  
 // Atomics
-MAIN = _{ NOTHING ~ (Newline | Err | EXPR | COMMENT)* ~ NOTHING }
+MAIN = _{ NOTHING ~ (Err | EXPR | COMMENT | Newline)* ~ NOTHING }
 
 Comment = { (!("(" | ")") ~ ANY)* }
 COMMENT = _{ "(" ~ Comment ~ ")" }
@@ -156,13 +156,13 @@ TypeStr = { TYSTR_EN | TYSTR_CAT }
 
 TYPE = _{ TypeInt | TypeFloat | TypeStr }
 
-// Lists
+// ListsRHS = _{ Newline* ~ (NotUpper | Op | Cmp | STR | NUM | Name) ~ Newline* }
 MADEOF_EN = _{ "made of" | "formed by" | "of" }
 MADEOF_CAT = _{ "feta de"| "formada per" | "de" | "d'" }
 MADEOF = _{ MADEOF_EN | MADEOF_CAT }
 
-LIST_COMM = _{ Name ~ " "* ~ MADEOF ~ WHITESPACE? ~ TYPE ~ ":" ~ WHITESPACE? ~ (RHS ~ "," ~ WHITESPACE?)* ~ RHS }
-LIST_DASH = _{ Name ~ " "* ~ MADEOF ~ WHITESPACE? ~ TYPE ~ ":" ~ WHITESPACE? ~ NEWLINE ~ ("-" ~ ">"? ~ WHITESPACE? ~ RHS ~ NEWLINE)* ~ "-" ~ ">"? ~ WHITESPACE? ~ RHS ~ NEWLINE? }
+LIST_COMM = _{ Name ~ " "* ~ MADEOF ~ WHITESPACE? ~ TYPE ~ ":" ~ WHITESPACE? ~ Newline? ~ (RHS ~ "," ~ WHITESPACE? ~ Newline*)* ~ RHS}
+LIST_DASH = _{ Name ~ " "* ~ MADEOF ~ WHITESPACE? ~ TYPE ~ ":" ~ WHITESPACE? ~ Newline? ~ ("-" ~ ">"? ~ WHITESPACE? ~ RHS ~ Newline)* ~ "-" ~ ">"? ~ WHITESPACE? ~ RHS ~ NEWLINE? }
 List = ${ LIST_COMM | LIST_DASH }
 
 // Expr sides
