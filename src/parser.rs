@@ -69,12 +69,12 @@ pub fn parse_file(file: &mut File) -> String {
 }
 
 fn die(err: &str, line: u64, ctx: &str) -> ! {
-    die!("\nERROR:   {} {}.\nContext: {}", err, line, ctx)
+    die!("\nERROR:   {} {}.\nContext: {}.", err, line, ctx)
 }
 
 fn die_corr(err: &str, line: u64, corr: &str, ctx: &str) -> ! {
     die!(
-        "\nERROR:   {} {}.\n         {}\nContext: {}",
+        "\nERROR:   {} {}.\n         {}\nContext: {}.",
         err,
         line,
         corr,
@@ -83,16 +83,16 @@ fn die_corr(err: &str, line: u64, corr: &str, ctx: &str) -> ! {
 }
 
 fn check_errors(expr: Pair<Rule>, global: &Global) -> ! {
-    let _die = |err: &str| -> ! { die(err, global.line_num, expr.as_str()) };
+    let _die = |err: &str| -> ! { die(err, global.line_num, &global.line_str) };
     let _die_corr =
-        |err: &str, corr: &str| -> ! { die_corr(err, global.line_num, corr, expr.as_str()) };
+        |err: &str, corr: &str| -> ! { die_corr(err, global.line_num, corr, &global.line_str) };
     match expr.as_rule() {
         Rule::EmptyStr => _die_corr("Empty string in line", "Strings cannot be empty"),
         Rule::NotDot => _die("Expected dot in line"),
-        Rule::NotUpper => _die("Variable not starting with UPPERCASE letter in line"),
+        Rule::NotUpper => _die_corr(&format!("Variable with name \"{}\" does not start with UPPERCASE letter in line", expr.as_str()), "Variables must start with an UPPERCASE letter."),
         Rule::NotVarRead => _die_corr("Incorrect read in line", "Only variables can be read"),
-        Rule::ReadFmtStr => _die_corr("Printing more than one String in Read in line", "You can only print one message on Read, if you want to print an elaborate message, use a Print before."),
-        _ => die!(),
+        Rule::ReadFmtStr => _die_corr("Printing more than one String with Read in line", "You can only print one message with Read, if you want to print an elaborate message, use a Print before."),
+        _ => die!("Unexpected error, please post an issue to https://github.com/LyonSyonII/Intuitive with your code file."),
     }
 }
 
@@ -318,25 +318,6 @@ fn parse_op(mut pairs: Pairs<Rule>, global: &Global) -> (String, Rule) {
     };
 
     let parse_side = |hs: Pair<Rule>| -> (String, Rule) {
-        /*
-        match hs.as_rule() {
-            Rule::Op | Rule::Cmp => parse_op(hs.into_inner(), &global),
-            Rule::Int => (hs.as_str().to_owned() + ".0", Rule::Int),
-            Rule::Float => (hs.as_str().replace(',', "."), Rule::Float),
-            Rule::Name => {
-                let hs = hs.as_str().to_owned();
-                let rule = *global.variables.get(&hs).unwrap_or_else(|| {
-                    die(
-                        "Variable not initialized in line",
-                        global.line_num,
-                        hs.as_str(),
-                    )
-                });
-                (hs, rule)
-            }
-            _ => (hs.as_str().into(), Rule::WHITESPACE),
-        }
-         */
         match hs.as_rule() {
             Rule::String | Rule::FmtString => die_corr("Operation with string in line", global.line_num, "Strings cannot be added, use formatting instead: e.g. Print \"The value of A is: \" A.", &global.line_str),
             _ => parse_rhs(hs, global)
@@ -373,10 +354,7 @@ fn parse_rhs(rhs: Pair<Rule>, global: &Global) -> (String, Rule) {
             rule = ret.1;
             ret.0
         }
-        Rule::NotUpper => {
-            
-        }
-        _ => "".into(),
+        _ => check_errors(rhs, global),
     };
 
     (rhs, rule)

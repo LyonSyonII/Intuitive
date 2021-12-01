@@ -1,3 +1,2 @@
-List of String: "A" "B" "C" "D".
-A = "The list is: " List.
-Print A.
+A = a.
+a = A.
