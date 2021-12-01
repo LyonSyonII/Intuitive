@@ -119,7 +119,7 @@ THEN_CAT = _{ "llavors" }
 THEN = _{ (THEN_EN | THEN_CAT) ~ ":"? | ":" }
  
 // Atomics
-MAIN = _{ NOTHING ~ (Err | EXPR | COMMENT | Newline)* ~ NOTHING }
+MAIN = _{ NOTHING ~ (Newline | Err | EXPR | COMMENT)* ~ NOTHING }
 
 Comment = { (!("(" | ")") ~ ANY)* }
 COMMENT = _{ "(" ~ Comment ~ ")" }

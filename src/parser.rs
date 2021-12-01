@@ -3,6 +3,8 @@
 
 #![allow(dead_code)]
 
+use crate::colors as color;
+
 use die::{die, Die};
 use pest::{iterators::Pair, iterators::Pairs, Parser as P};
 use std::fs::File;
@@ -76,17 +78,29 @@ pub fn parse_file(file: &mut File) -> String {
 }
 
 fn die(err: &str, global: &mut Global) -> String {
-    global.errors += &format!("\nERROR:   {} {}.\nContext: {}.\n", err, global.line_num, global.line_str);
+    global.errors += &format!(
+        "\n{}ERROR:   {} {}.{}\nContext: {}.{}\n", 
+        color::RED_BOLD, 
+        err, 
+        global.line_num, 
+        color::BOLD, 
+        global.line_str.replace('\n', "\n         "), 
+        color::DEFAULT
+    );
+
     String::new()
 }
 
 fn die_corr(err: &str, corr: &str, global: &mut Global) -> String {
     global.errors += &format!(
-        "\nERROR:   {} {}.\n         {}\nContext: {}.\n",
+        "\n{}ERROR:   {} {}.\n         {}{}\nContext: {}.{}\n",
+        color::RED_BOLD,
         err,
         global.line_num,
         corr,
-        global.line_str
+        color::BOLD,
+        global.line_str.replace('\n', "\n         "),
+        color::DEFAULT
     );
 
     String::new()

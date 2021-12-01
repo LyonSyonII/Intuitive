@@ -1,4 +1,5 @@
 mod parser;
+pub mod colors;
 
 #[cfg(test)]
 mod tests {
