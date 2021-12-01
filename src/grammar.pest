@@ -166,7 +166,7 @@ LIST_DASH = _{ Name ~ " "* ~ MADEOF ~ WHITESPACE? ~ TYPE ~ ":" ~ WHITESPACE? ~ N
 List = ${ LIST_COMM | LIST_DASH }
 
 // Expr sides
-RHS = _{ Op | Cmp | STR | NUM | Name }
+RHS = _{ NotUpper | Op | Cmp | STR | NUM | Name }
 LHS = _{ String | NUM | Name }
 PRINT_LHS = _{ Op | NUM | String | !KEYWORD ~ Name }
  
@@ -201,7 +201,7 @@ IFEXPR = _{ SIMPLE_EXPRS ~ "," }
 Op = { Add | Sub | Mul | Div | And | Or }
 Cmp = { LowEq | Lower | GreatEq | Greater | EqCmp | NotEq }
 Def = { DEF ~ Name ~ (AS ~ (TYPE | RHS))? }
-Assign = { Name ~ EQUAL ~ RHS }
+Assign = ${ Name ~ LINKER+ ~ EQUAL ~ LINKER+ ~ RHS }
 Print = { PRINT ~ PRINT_LHS+ }
 Read = { READ ~ String? ~ Name ~ (AS ~ TYPE)? }
 If = { IF ~ Cmp ~ THEN ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
@@ -212,10 +212,10 @@ ElseIf = { ELSEIF ~ Cmp ~ THEN ~ IFEXPR* ~ SIMPLE_EXPRS }
 Err = { NotUpper | NotVarRead | ReadFmtStr | NotDot | EmptyStr }
 EmptyStr = { (!"\"" ~ ANY)* ~ "\"\"" ~ ANY* }
 NotDot = { EXPRS ~ !("." | ",") }
-NotUpper = { !KEYWORD ~ ASCII_ALPHA_LOWER+ }
+NotUpper = @{ " "* ~ ASCII_ALPHA_LOWER+ ~ " "* }
 NotVarRead = {  READ ~ !Name ~ !FmtString ~ RHS ~ (AS ~ TYPE)? }
 READ_FMT_STR = _{ String ~ (String | Name) ~ (String | Name) ~ ANY* | Name ~ (String | Name) ~ ANY* }
 ReadFmtStr = { READ ~ READ_FMT_STR ~ (AS ~ TYPE)? }
 
 // Control rules, unreachable normally
-NonInit = { "UNREACHABLE" }
+NotInit = { "UNREACHABLE" }

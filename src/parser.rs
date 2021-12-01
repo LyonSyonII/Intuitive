@@ -59,7 +59,7 @@ pub fn parse_file(file: &mut File) -> String {
     }
     
     for var in global.variables {
-        if var.1 == Rule::NonInit {
+        if var.1 == Rule::NotInit {
             die!("\nERROR: Unused variable \"{}\".\n       All variables must be used, remove the ones you don't want.", var.0)
         }
     }
@@ -142,7 +142,7 @@ fn parse_def(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
         }
         
     } else {
-        global.variables.insert(name.into(), Rule::NonInit);
+        global.variables.insert(name.into(), Rule::NotInit);
         format!("let mut {};", name)
     }
 }
@@ -150,13 +150,14 @@ fn parse_def(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
 fn parse_assig(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
     let name = pairs.next().unwrap().as_str();
     let (rhs, rule) = parse_rhs(pairs.next().unwrap(), &global);
-
+    
+    // Canged rule == *ty by is_same_type()
     let decl = if let Some(ty) = global.variables.get(name) {
-        rule == *ty || rule == Rule::NonInit || is_int(rule, *ty)
+        is_same_type(rule, *ty) || rule == Rule::NotInit
     } else {
         false
     };
-
+    
     if decl {
         format!("{} = {};", name, rhs)
     } else {
@@ -372,6 +373,9 @@ fn parse_rhs(rhs: Pair<Rule>, global: &Global) -> (String, Rule) {
             rule = ret.1;
             ret.0
         }
+        Rule::NotUpper => {
+            
+        }
         _ => "".into(),
     };
 
@@ -399,7 +403,7 @@ fn parse_fmt_string(pairs: Pairs<Rule>, global: &Global) -> String {
         };
         rhs += &format!(", {}", expr);
     }
-
+    
     format!("{}\"{})", lhs, rhs)
 }
 
