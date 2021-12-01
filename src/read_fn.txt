@@ -1,4 +1,5 @@
 
+
 fn read<U: std::str::FromStr + ?Sized + 'static>(message: &str) -> U {
     use std::io::{ self, Write };
     use std::any::{ TypeId };

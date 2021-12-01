@@ -50,14 +50,19 @@ pub fn parse_file(file: &mut File) -> String {
     let parse = Parser::parse(Rule::MAIN, &inp).die("Error parsing the file");
 
     let mut out: String =
-        "#[allow(non_snake_case)]\n#[allow(dead_code)]\n#[allow(unused_variables)]\n#[allow(unused_mut)]\n#[allow(unused_assignments)]\nfn main() {"
+        "#![allow(non_snake_case)]\n#![allow(dead_code)]\n#![allow(unused_variables)]\n#![allow(unused_mut)]\n#![allow(unused_assignments)]\nfn main() {"
             .into();
 
     let mut global = Global::new();
     for expr in parse {
         out += &parse_expr(expr, &mut global)
     }
-
+    
+    for var in global.variables {
+        if var.1 == Rule::NonInit {
+            die!("\nERROR: Unused variable \"{}\".\n       All variables must be used, remove the ones you don't want.", var.0)
+        }
+    }
     //out + "}"
     rustfmt_wrapper::rustfmt(out + "}" + include_str!("read_fn.txt"))
         .die("ERROR: Rustfmt could not format the input")
@@ -71,8 +76,8 @@ fn die_corr(err: &str, line: u64, corr: &str, ctx: &str) -> ! {
     die!(
         "\nERROR:   {} {}.\n         {}\nContext: {}",
         err,
-        corr,
         line,
+        corr,
         ctx
     )
 }
@@ -124,13 +129,21 @@ fn parse_comment(comment: &str) -> String {
 
 fn parse_def(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
     let name = pairs.next().unwrap().as_str();
-    let rhs = pairs.next().unwrap();
-    let (rhs, rule) = parse_rhs(rhs, &global);
-
-    global.variables.insert(name.into(), rule);
-    match rhs.is_empty() {
-        true => format!("let mut {};", name),
-        false => format!("let mut {} = {};", name, rhs),
+    if let Some(rhs) = pairs.next() {
+        let rule = rhs.as_rule();
+        if is_type(rhs.as_rule()) {
+            global.variables.insert(name.into(), type_to_rule(rule));
+            format!("let mut {}: {};", name, type_to_str(rule))
+        }
+        else {
+            let (rhs, rule) = parse_rhs(rhs, &global);
+            global.variables.insert(name.into(), rule);
+            format!("let mut {} = {};", name, rhs)
+        }
+        
+    } else {
+        global.variables.insert(name.into(), Rule::NonInit);
+        format!("let mut {};", name)
     }
 }
 
@@ -138,14 +151,17 @@ fn parse_assig(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
     let name = pairs.next().unwrap().as_str();
     let (rhs, rule) = parse_rhs(pairs.next().unwrap(), &global);
 
-    let initialized = global.variables.contains_key(name)
-        && (rule == Rule::Float || rule == global.variables[name]);
-    match initialized {
-        true => format!("{} = {};", name, rhs),
-        false => {
-            global.variables.insert(name.into(), rule);
-            format!("let mut {} = {};", name, rhs)
-        }
+    let decl = if let Some(ty) = global.variables.get(name) {
+        rule == *ty || rule == Rule::NonInit || is_int(rule, *ty)
+    } else {
+        false
+    };
+
+    if decl {
+        format!("{} = {};", name, rhs)
+    } else {
+        global.variables.insert(name.into(), rule);
+        format!("let mut {} = {};", name, rhs)
     }
 }
 
@@ -154,7 +170,7 @@ fn parse_print(pairs: Pairs<Rule>, global: &Global) -> String {
     let mut rhs = String::new();
     for pair in pairs {
         let (ret, rule) = parse_rhs(pair, global);
-        if rule == Rule::TypeInt || rule == Rule::TypeFloat || rule == Rule::TypeStr {
+        if is_type(rule) {
             lhs += "{:?}";
         } else {
             lhs += "{}";
@@ -169,29 +185,20 @@ fn parse_print(pairs: Pairs<Rule>, global: &Global) -> String {
 fn parse_read(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
     let pair = pairs.next().unwrap();
     let (message, name) = if pair.as_rule() == Rule::String {
-        (
-            pair.as_str(),
-            pairs.next().unwrap().as_str(),
-        )
+        (pair.as_str(), pairs.next().unwrap().as_str())
     } else {
         ("\"\"", pair.as_str())
     };
 
     if let Some(ty) = pairs.next() {
         let rule = ty.as_rule();
-        let ty = match rule {
-            Rule::TypeInt => "i64",
-            Rule::TypeFloat => "f64",
-            Rule::TypeStr => "String",
-            _ => "",
-        };
 
         global.variables.insert(name.into(), type_to_rule(rule));
-        format!("let {} = read::<{}>({});", name, ty, message)
+        format!("let {} = read::<{}>({});", name, type_to_str(rule), message)
     } else {
         if global.variables.get(name).is_none() {
             die(
-                "Trying to Read into non initialized variable in line",
+                "Trying to Read into non declared variable in line",
                 global.line_num,
                 &global.line_str,
             )
@@ -226,8 +233,13 @@ fn parse_if(rule: Rule, mut pairs: Pairs<Rule>, global: &mut Global) -> String {
 fn parse_op_eq(sym: &str, reverse: bool, mut pairs: Pairs<Rule>, global: &mut Global) -> String {
     let lhs = pairs.next().unwrap();
     let rhs = pairs.next().unwrap();
-
+    // Reverse is +, -, List
     let (name, rhs) = if reverse {
+        let add_list = parse_add_list(rhs.as_str(), lhs.clone(), global);
+        if add_list != String::new() {
+            return add_list;
+        }
+
         (rhs.as_str(), parse_rhs(lhs, &global).0)
     } else {
         (lhs.as_str(), parse_rhs(rhs, &global).0)
@@ -239,25 +251,16 @@ fn parse_op_eq(sym: &str, reverse: bool, mut pairs: Pairs<Rule>, global: &mut Gl
 fn parse_list(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
     let name = pairs.next().unwrap().as_str();
     let list_ty = pairs.next().unwrap().as_rule();
-    let ty = match list_ty {
-        Rule::TypeInt => Rule::Int,
-        Rule::TypeFloat => Rule::Float,
-        Rule::TypeStr => Rule::String,
-        _ => Rule::Err,
-    };
+    let ty = type_to_rule(list_ty);
 
     let mut rhs = String::new();
     for elem in pairs {
         let (ret, mut rule) = parse_rhs(elem, global);
         if rule == Rule::FmtString {
             rule = Rule::String
-        } else if rule == Rule::Int && ty == Rule::Float {
-            rule = Rule::Float
-        } else if rule == Rule::Float && ty == Rule::Int {
-            rule = Rule::Int
         }
 
-        if rule != ty {
+        if !is_same_type(ty, rule) {
             die_corr(
                 &format!(
                     "Variable of type {:?} in a list of type {:?} in line",
@@ -273,7 +276,25 @@ fn parse_list(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
     }
 
     global.variables.insert(name.into(), list_ty);
-    format!("let {} = Vec::from([{}]);", name, rhs)
+    format!("let mut {} = Vec::from([{}]);", name, rhs)
+}
+
+fn parse_add_list(name: &str, lhs: Pair<Rule>, global: &Global) -> String {
+        if let Some(list) = global.variables.get(name) {
+            if is_type(*list) {
+                let (lhs, ty) = parse_rhs(lhs, &global);
+                let list = type_to_rule(*list);
+                if !is_same_type(ty, list) {
+                    let err = format!("Trying to add element of type {:?} to List of type {:?} in line", ty, list);
+                    die_corr(&err, global.line_num, "Lists can only contain elements of the same type.", &global.line_str)
+                }
+                format!("{}.push({});", name, lhs) 
+            }
+            else { String::new() }
+        }
+        else {
+            String::new()
+        }
 }
 
 fn parse_op(mut pairs: Pairs<Rule>, global: &Global) -> (String, Rule) {
@@ -374,9 +395,36 @@ fn parse_fmt_string(pairs: Pairs<Rule>, global: &Global) -> String {
 
 fn type_to_rule(ty: Rule) -> Rule {
     match ty {
-        Rule::TypeInt => Rule::Int,
-        Rule::TypeFloat => Rule::Float,
+        //Rule::TypeInt => Rule::Int,
+        //Rule::TypeFloat => Rule::Float,
+        Rule::TypeInt | Rule::TypeFloat => Rule::Float,
         Rule::TypeStr => Rule::String,
         _ => Rule::Err,
     }
+}
+
+fn type_to_str(ty: Rule) -> &'static str {
+    match ty {
+        //Rule::TypeInt => "i64",
+        //Rule::TypeFloat => "f64",
+        Rule::TypeInt | Rule::TypeFloat => "f64",
+        Rule::TypeStr => "String",
+        _ => "",
+    }
+}
+
+fn is_same_type(rule1: Rule, rule2: Rule) -> bool {
+    match rule1 {
+        Rule::Int | Rule::Float => rule2 == Rule::Float || rule2 == Rule::Int,
+        Rule::String => rule2 == Rule::String,
+        _ => false,
+    }
+}
+
+fn is_int(rule1: Rule, rule2: Rule) -> bool {
+    rule1 == Rule::Int && rule2 == Rule::Float || rule1 == Rule::Float && rule2 == Rule::Int
+}
+
+fn is_type(rule: Rule) -> bool {
+    rule == Rule::TypeInt || rule == Rule::TypeFloat || rule == Rule::TypeStr
 }

@@ -200,7 +200,7 @@ IFEXPR = _{ SIMPLE_EXPRS ~ "," }
 
 Op = { Add | Sub | Mul | Div | And | Or }
 Cmp = { LowEq | Lower | GreatEq | Greater | EqCmp | NotEq }
-Def = { DEF ~ Name ~ (AS ~ RHS)? }
+Def = { DEF ~ Name ~ (AS ~ (TYPE | RHS))? }
 Assign = { Name ~ EQUAL ~ RHS }
 Print = { PRINT ~ PRINT_LHS+ }
 Read = { READ ~ String? ~ Name ~ (AS ~ TYPE)? }
@@ -216,3 +216,6 @@ NotUpper = { !KEYWORD ~ ASCII_ALPHA_LOWER+ }
 NotVarRead = {  READ ~ !Name ~ !FmtString ~ RHS ~ (AS ~ TYPE)? }
 READ_FMT_STR = _{ String ~ (String | Name) ~ (String | Name) ~ ANY* | Name ~ (String | Name) ~ ANY* }
 ReadFmtStr = { READ ~ READ_FMT_STR ~ (AS ~ TYPE)? }
+
+// Control rules, unreachable normally
+NonInit = { "UNREACHABLE" }

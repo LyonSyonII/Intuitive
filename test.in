@@ -1,4 +1,3 @@
-Read "Input A: " A as Num.
-Read "Input B: " B as Num.
-
-If A < B && B != 10: Print "Hey, it worked!".
+List of Int: 1, 2, 3.
+Add 5 to List.
+Print List.
