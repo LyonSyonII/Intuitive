@@ -282,12 +282,13 @@ fn parse_list(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
 fn parse_add_list(name: &str, lhs: Pair<Rule>, global: &Global) -> String {
         if let Some(list) = global.variables.get(name) {
             if is_type(*list) {
-                let (lhs, ty) = parse_rhs(lhs, &global);
+                let (mut lhs, ty) = parse_rhs(lhs, &global);
                 let list = type_to_rule(*list);
                 if !is_same_type(ty, list) {
                     let err = format!("Trying to add element of type {:?} to List of type {:?} in line", ty, list);
                     die_corr(&err, global.line_num, "Lists can only contain elements of the same type.", &global.line_str)
                 }
+                if ty == Rule::String { lhs += ".into()" }
                 format!("{}.push({});", name, lhs) 
             }
             else { String::new() }
@@ -381,8 +382,17 @@ fn parse_fmt_string(pairs: Pairs<Rule>, global: &Global) -> String {
     let mut lhs = String::from("format!(\"");
     let mut rhs = String::new();
     for pair in pairs {
-        lhs += "{}";
-        let expr = if pair.as_rule() == Rule::Op {
+        let rule = pair.as_rule();
+        if rule == Rule::Name { 
+            if let Some(var) = global.variables.get(pair.as_str()) {
+                if is_type(*var) {
+                    lhs += "{:?}" 
+                }
+            }
+        }
+        else { lhs += "{}" }
+    
+        let expr = if rule == Rule::Op {
             parse_op(pair.into_inner(), global).0
         } else {
             pair.as_str().into()
@@ -416,7 +426,7 @@ fn type_to_str(ty: Rule) -> &'static str {
 fn is_same_type(rule1: Rule, rule2: Rule) -> bool {
     match rule1 {
         Rule::Int | Rule::Float => rule2 == Rule::Float || rule2 == Rule::Int,
-        Rule::String => rule2 == Rule::String,
+        Rule::String | Rule::FmtString => rule2 == Rule::String || rule2 == Rule::FmtString,
         _ => false,
     }
 }
