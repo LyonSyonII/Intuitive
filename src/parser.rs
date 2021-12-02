@@ -76,7 +76,7 @@ pub fn parse_file(file: &mut File) -> String {
 
     //out + "}"
     rustfmt_wrapper::rustfmt(out + "}" + include_str!("read_fn.txt"))
-        .die("ERROR: Rustfmt could not format the input")
+        .die(&format!("{}Unexpected error, please post an issue to https://github.com/LyonSyonII/Intuitive with your code file.{}", color::RED_BOLD, color::DEFAULT))
 }
 
 fn die(err: &str, global: &mut Global) -> String {
@@ -116,8 +116,10 @@ fn check_errors(expr: Pair<Rule>, global: &mut Global) -> String {
         Rule::NotVarRead => die_corr("Incorrect read in line", "Only variables can be read", global),
         Rule::NotCmpIf => die_corr("If statement without condition in line", "If and Else If statements must have a condition. e.g. If A > 5: Print A.", global),
         Rule::CmpElse => die_corr("Else statement with condition in line", "Else statements must not have any condition. e.g. Else: Print A.", global),
-        Rule::ReadFmtStr => die_corr("Printing more than one String with Read in line", "You can only print one message with Read, if you want to print an elaborate message, use a Print before.", global),
-
+        Rule::NestedIf => die_corr("If inside If statement in line", "If, Else and Else If cannot be nested.", global),
+        Rule::ReadFmtStr => die_corr("Read instruction with more than one String to print in line", "You can only print one message with Read, if you want to print an elaborate message, use a Print instruction before.", global),
+        Rule::Empty => die("Empty or invalid instruction in line", global),
+        Rule::Invalid => die("Invalid expression in line", global),
         _ => die("Unexpected error, please post an issue to https://github.com/LyonSyonII/Intuitive with your code file.", global),
     }
 }
