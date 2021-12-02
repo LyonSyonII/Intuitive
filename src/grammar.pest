@@ -168,7 +168,7 @@ List = ${ LIST_COMM | LIST_DASH }
 // Expr sides
 RHS = _{ NotUpper | Op | Cmp | STR | NUM | Name }
 LHS = _{ String | NUM | Name }
-PRINT_LHS = _{ Op | NUM | String | !KEYWORD ~ Name }
+PRINT_LHS = _{ NotUpper | Op | NUM | String | !KEYWORD ~ Name }
  
 // Binary expressions
 Add = { LHS ~ LINKER* ~ ADD ~ LINKER* ~ RHS }
@@ -205,17 +205,21 @@ Assign = ${ Name ~ LINKER+ ~ EQUAL ~ LINKER+ ~ RHS }
 Print = { PRINT ~ PRINT_LHS+ }
 Read = { READ ~ String? ~ Name ~ (AS ~ TYPE)? }
 If = { IF ~ Cmp ~ THEN ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
+ElseIf = { ELSEIF ~ Cmp ~ THEN ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
 Else = { ELSE ~ THEN? ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
-ElseIf = { ELSEIF ~ Cmp ~ THEN ~ IFEXPR* ~ SIMPLE_EXPRS }
+
 
 // Errors
-Err = { NotUpper | NotVarRead | ReadFmtStr | NotDot | EmptyStr }
+Err = { NotCmpIf | CmpElse | NotUpper | NotVarRead | ReadFmtStr | NotDot | EmptyStr }
 EmptyStr = { (!"\"" ~ ANY)* ~ "\"\"" ~ ANY* }
 NotDot = { EXPRS ~ !("." | ",") }
-NotUpper = @{ " "* ~ ASCII_ALPHA_LOWER+ ~ " "* }
-NotVarRead = {  READ ~ !Name ~ !FmtString ~ RHS ~ (AS ~ TYPE)? }
+NotUpper = @{ " "* ~ (!KEYWORD ~ ASCII_ALPHA_LOWER)+ ~ " "* ~ "."? }
+NotVarRead = { READ ~ !Name ~ !FmtString ~ RHS ~ (AS ~ TYPE)? }
+NotCmpIf = { (ELSEIF | IF) ~ THEN? ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
+CmpElse = { ELSE ~ Cmp ~ THEN? ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
 READ_FMT_STR = _{ String ~ (String | Name) ~ (String | Name) ~ ANY* | Name ~ (String | Name) ~ ANY* }
 ReadFmtStr = { READ ~ READ_FMT_STR ~ (AS ~ TYPE)? }
+
 
 // Control rules, unreachable normally
 NotInit = { "UNREACHABLE" }

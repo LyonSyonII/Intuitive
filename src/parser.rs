@@ -14,12 +14,13 @@ use std::io::*;
 #[grammar = "grammar.pest"]
 struct Parser;
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 struct Global {
     variables: std::collections::HashMap<String, Rule>,
     line_num: u64,
     line_str: String,
     errors: String,
+    last_expr: Rule,
 }
 
 impl Global {
@@ -29,6 +30,7 @@ impl Global {
             line_num: 1,
             line_str: String::new(),
             errors: String::new(),
+            last_expr: Rule::MAIN,
         }
     }
 }
@@ -111,8 +113,9 @@ fn check_errors(expr: Pair<Rule>, global: &mut Global) -> String {
         Rule::EmptyStr => die_corr("Empty string in line", "Strings cannot be empty", global),
         Rule::NotDot => die("Expected dot in line", global),
         Rule::NotUpper => die_corr(&format!("Variable with name \"{}\" does not start with UPPERCASE letter in line", expr.as_str()), "Variables must start with an UPPERCASE letter.", global),
-        
         Rule::NotVarRead => die_corr("Incorrect read in line", "Only variables can be read", global),
+        Rule::NotCmpIf => die_corr("If statement without condition in line", "If and Else If statements must have a condition. e.g. If A > 5: Print A.", global),
+        Rule::CmpElse => die_corr("Else statement with condition in line", "Else statements must not have any condition. e.g. Else: Print A.", global),
         Rule::ReadFmtStr => die_corr("Printing more than one String with Read in line", "You can only print one message with Read, if you want to print an elaborate message, use a Print before.", global),
 
         _ => die("Unexpected error, please post an issue to https://github.com/LyonSyonII/Intuitive with your code file.", global),
@@ -122,8 +125,8 @@ fn check_errors(expr: Pair<Rule>, global: &mut Global) -> String {
 fn parse_expr(expr: Pair<Rule>, global: &mut Global) -> String {
     println!("{:#?}", global);
     global.line_str = expr.as_str().into();
-
-    match expr.as_rule() {
+    let rule = expr.as_rule();
+    let ret = match rule {
         Rule::Err => check_errors(expr.into_inner().next().unwrap(), global),
         Rule::Newline => {
             global.line_num += 1;
@@ -143,7 +146,14 @@ fn parse_expr(expr: Pair<Rule>, global: &mut Global) -> String {
         Rule::DivEq => parse_op_eq("/=", false, expr.into_inner(), global),
         Rule::List => parse_list(expr.into_inner(), global),
         _ => String::new(),
+    };
+    
+    match rule {
+        Rule::Newline | Rule::Comment => {},
+        _ => global.last_expr = rule,
     }
+    
+    ret
 }
 
 fn parse_comment(comment: &str) -> String {
@@ -234,6 +244,9 @@ fn parse_read(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
 fn parse_if(rule: Rule, mut pairs: Pairs<Rule>, global: &mut Global) -> String {
     let mut lhs = String::new();
     if rule != Rule::If {
+        if global.last_expr != Rule::If && global.last_expr != Rule::ElseIf {
+            die_corr("Orphan Else statement in line", "Else and Else If statements must always follow an initial If.", global);
+        }
         lhs += "else ";
     }
 
