@@ -8,7 +8,7 @@ LINKER_EN = _{ " " ~ ("than" | "is" | "to" | "also" | "of") ~ " " }
 LINKER_CAT = _{ " " ~ ("es" | "és" | "a" | "que" | "compleix" | "també" | "tambe") ~ " " }
 LINKER = _{ LINKER_EN | LINKER_CAT | " " }
 
-KEYWORD = _{ EQUAL | EQUAL_CMP | ADD | SUB | MUL | DIV | LINKER | PRINT | IF | ELSE | ELSEIF | THEN | OR | LOWER | GREATER }
+KEYWORD = _{ EQUAL | EQUAL_CMP | ADD | SUB | MUL | DIV | LINKER | PRINT | IF | ELSE | ELSEIF | THEN | OR | AND | LOWER | GREATER | EQUAL_CMP | NOTEQ | PRINT | READ | IF | ELSE | ELSEIF | THEN }
 
 DEF_EN = _{ ^"define" | ^"def" }
 DEF_CAT = _{ ^"defineix" }
@@ -204,16 +204,16 @@ Def = { DEF ~ Name ~ (AS ~ (TYPE | RHS))? }
 Assign = ${ Name ~ LINKER+ ~ EQUAL ~ LINKER+ ~ RHS }
 Print = { PRINT ~ PRINT_LHS+ }
 Read = { READ ~ String? ~ Name ~ (AS ~ TYPE)? }
-If = { IF ~ Cmp ~ THEN ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
-ElseIf = { ELSEIF ~ Cmp ~ THEN ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
-Else = { ELSE ~ THEN? ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
+If = !{ IF ~ Cmp ~ THEN ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
+ElseIf = !{ ELSEIF ~ Cmp ~ THEN ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
+Else = !{ ELSE ~ THEN? ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
 
-FUNC_COMM = _{ Name ~ ":" ~ WHITESPACE? ~ Newline? ~ (EXPRS ~ "," ~ WHITESPACE? ~ Newline*)* ~ (EXPRS | Name)}
-FUNC_DASH = _{ Name ~ ":" ~ WHITESPACE? ~ Newline? ~ ("-" ~ ">"? ~ WHITESPACE? ~ EXPRS ~ ","? ~Newline)* ~ "-" ~ ">"? ~ WHITESPACE? ~ (EXPRS | Name) ~ NEWLINE? }
-Function = ${ FUNC_COMM | FUNC_DASH }
+FUNC_COMM = _{ Name ~ (LINKER+ ~ Name*)? ~ ":" ~ WHITESPACE? ~ Newline? ~ (SIMPLE_EXPRS ~ "," ~ WHITESPACE? ~ Newline*)* ~ (SIMPLE_EXPRS | Name)}
+FUNC_DASH = _{ Name ~ (LINKER+ ~ Name*)? ~ ":" ~ WHITESPACE? ~ Newline? ~ ("-" ~ ">"? ~ WHITESPACE? ~ EXPRS ~ ";"? ~ Newline)* ~ "-" ~ ">"? ~ WHITESPACE? ~ (EXPRS | Name) ~ NEWLINE? }
+Function = { FUNC_COMM | FUNC_DASH }
 
 // Errors
-Err = { NestedIf | NotCmpIf | CmpElse | NotUpper | NotVarRead | ReadFmtStr | NotDot | EmptyStr }
+Err = { NestInCommaFunc | NestedIf | NotCmpIf | CmpElse | NotUpper | NotVarRead | ReadFmtStr | NotDot | EmptyStr }
 EmptyStr = { (!"\"" ~ ANY)* ~ "\"\"" ~ ANY* }
 NotDot = { EXPRS ~ !("." | ",") }
 NotUpper = @{ " "* ~ (!KEYWORD ~ ASCII_ALPHA_LOWER)+ ~ " "* ~ "."? }
@@ -221,6 +221,8 @@ NotVarRead = { READ ~ !Name ~ !FmtString ~ RHS ~ (AS ~ TYPE)? }
 NotCmpIf = { (ELSEIF | IF) ~ THEN ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
 CmpElse = { ELSE ~ Cmp ~ THEN? ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
 NestedIf = { (IF | ELSEIF) ~ Cmp ~ THEN ~ NEWLINE? ~ (!(IF | ELSEIF | ELSE | ".") ~ ANY)* ~ (IF | ELSEIF | ELSE) ~ (!"."~ ANY)* ~ "." }
+
+NestInCommaFunc = { Name ~ (LINKER+ ~ Name*)? ~ ":" ~ WHITESPACE? ~ Newline? ~ (!(IF | ELSEIF | ELSE | ".") ~ ANY)* ~ (IF | ELSEIF | ELSE) ~ (!"." ~ ANY)* ~ "." }
 
 READ_FMT_STR = _{ String ~ (String | Name) ~ (String | Name) ~ ANY* | Name ~ (String | Name) ~ ANY* }
 ReadFmtStr = { READ ~ READ_FMT_STR ~ (AS ~ TYPE)? }
