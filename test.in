@@ -1,2 +1,0 @@
-if: Print "A".
-else 5 = 5: Print B.

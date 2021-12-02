@@ -119,7 +119,7 @@ THEN_CAT = _{ "llavors" }
 THEN = _{ (THEN_EN | THEN_CAT) ~ ":"? | ":" }
  
 // Atomics
-MAIN = _{ NOTHING ~ ((Err | EXPR | COMMENT | Newline)+ | Empty | InvalidExpr) ~ NOTHING }
+MAIN = _{ NOTHING ~ ((Err | EXPR | COMMENT | Newline)+ | Empty | Invalid) ~ NOTHING }
 
 Comment = { (!("(" | ")") ~ ANY)* }
 COMMENT = _{ "(" ~ Comment ~ ")" }
@@ -208,8 +208,9 @@ If = !{ IF ~ Cmp ~ THEN ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
 ElseIf = !{ ELSEIF ~ Cmp ~ THEN ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
 Else = !{ ELSE ~ THEN? ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
 
-FUNC_COMM = _{ Name ~ (LINKER+ ~ Name*)? ~ ":" ~ WHITESPACE? ~ Newline? ~ (SIMPLE_EXPRS ~ "," ~ WHITESPACE? ~ Newline*)* ~ (SIMPLE_EXPRS | Name)}
-FUNC_DASH = _{ Name ~ (LINKER+ ~ Name*)? ~ ":" ~ WHITESPACE? ~ Newline? ~ ("-" ~ ">"? ~ WHITESPACE? ~ EXPRS ~ ";"? ~ Newline)* ~ "-" ~ ">"? ~ WHITESPACE? ~ (EXPRS | Name) ~ NEWLINE? }
+Args = { LINKER+ ~ Name* }
+FUNC_COMM = _{ Name ~ Args? ~ ":" ~ WHITESPACE? ~ Newline? ~ (SIMPLE_EXPRS ~ "," ~ WHITESPACE? ~ Newline*)* ~ (SIMPLE_EXPRS | Name)}
+FUNC_DASH = _{ Name ~ Args? ~ ":" ~ WHITESPACE? ~ Newline? ~ ("-" ~ ">"? ~ WHITESPACE? ~ EXPRS ~ ";"? ~ Newline)* ~ "-" ~ ">"? ~ WHITESPACE? ~ (EXPRS | Name) ~ NEWLINE? }
 Function = { FUNC_COMM | FUNC_DASH }
 
 // Errors
@@ -222,12 +223,13 @@ NotCmpIf = { (ELSEIF | IF) ~ THEN ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
 CmpElse = { ELSE ~ Cmp ~ THEN? ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
 NestedIf = { (IF | ELSEIF) ~ Cmp ~ THEN ~ NEWLINE? ~ (!(IF | ELSEIF | ELSE | ".") ~ ANY)* ~ (IF | ELSEIF | ELSE) ~ (!"."~ ANY)* ~ "." }
 
-NestInCommaFunc = { Name ~ (LINKER+ ~ Name*)? ~ ":" ~ WHITESPACE? ~ Newline? ~ (!(IF | ELSEIF | ELSE | ".") ~ ANY)* ~ (IF | ELSEIF | ELSE) ~ (!"." ~ ANY)* ~ "." }
+NestInCommaFunc = { Name ~ (LINKER+ ~ Name*)? ~ ":" ~ WHITESPACE? ~ Newline? ~ (!(IF | ELSEIF | ELSE | ".") ~ ANY)* ~ (IF | ELSEIF | ELSE | (Name ~ (LINKER+ ~ Name*)? ~ ":")) ~ (!"." ~ ANY)* ~ "." }
 
 READ_FMT_STR = _{ String ~ (String | Name) ~ (String | Name) ~ ANY* | Name ~ (String | Name) ~ ANY* }
 ReadFmtStr = { READ ~ READ_FMT_STR ~ (AS ~ TYPE)? }
 
 Empty = { (!"." ~ ANY)* ~ "." }
-InvalidExpr = { ANY* }
+Invalid = { ANY* }
+
 // Control rules, unreachable normally
 NotInit = { "UNREACHABLE" }

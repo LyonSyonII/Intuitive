@@ -8,6 +8,7 @@ use crate::colors as color;
 use die::{die, Die};
 use pest::{iterators::Pair, iterators::Pairs, Parser as P};
 use std::fs::File;
+use std::borrow::{Borrow, BorrowMut};
 use std::io::*;
 
 #[derive(pest_derive::Parser)]
@@ -117,6 +118,7 @@ fn check_errors(expr: Pair<Rule>, global: &mut Global) -> String {
         Rule::NotCmpIf => die_corr("If statement without condition in line", "If and Else If statements must have a condition. e.g. If A > 5: Print A.", global),
         Rule::CmpElse => die_corr("Else statement with condition in line", "Else statements must not have any condition. e.g. Else: Print A.", global),
         Rule::NestedIf => die_corr("If inside If statement in line", "If, Else and Else If cannot be nested.", global),
+		Rule::NestInCommaFunc => die_corr("Complex instruction inside Comma-Based function in line", "You can only use If, Else, Else If in Dash-Based functions. e.g. \nCheckAge Age: \n- if Age < 18: Print \"You're too young\".", global),
         Rule::ReadFmtStr => die_corr("Read instruction with more than one String to print in line", "You can only print one message with Read, if you want to print an elaborate message, use a Print instruction before.", global),
         Rule::Empty => die("Empty or invalid instruction in line", global),
         Rule::Invalid => die("Invalid expression in line", global),
@@ -147,6 +149,7 @@ fn parse_expr(expr: Pair<Rule>, global: &mut Global) -> String {
         Rule::MulEq => parse_op_eq("*=", false, expr.into_inner(), global),
         Rule::DivEq => parse_op_eq("/=", false, expr.into_inner(), global),
         Rule::List => parse_list(expr.into_inner(), global),
+        Rule::Function => parse_func(expr.into_inner(), global),
         _ => String::new(),
     };
     
@@ -319,10 +322,12 @@ fn parse_list(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
 }
 
 fn parse_add_list(name: &str, lhs: Pair<Rule>, global: &mut Global) -> String {
-        if let Some(list) = global.variables.clone().get(name) {
-            if is_type(*list) {
+		let list = global.variables.get(name);
+        if list.is_some() {
+        	let list = *list.unwrap();
+            if is_type(list) {
                 let (mut lhs, ty) = parse_rhs(lhs, global);
-                let list = type_to_rule(*list);
+                let list = type_to_rule(list);
                 if !is_same_type(ty, list) {
                     let err = format!("Trying to add element of type {:?} to List of type {:?} in line", ty, list);
                     die_corr(&err, "Lists can only contain elements of the same type.", global);
@@ -335,6 +340,38 @@ fn parse_add_list(name: &str, lhs: Pair<Rule>, global: &mut Global) -> String {
         else {
             String::new()
         }
+}
+
+fn parse_func(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
+	let mut local = Global::new();
+	
+	let name = pairs.next().unwrap();
+	let mut args = Vec::new();
+	let mut pair = pairs.next().unwrap();
+	if pair.as_rule() == Rule::Args {
+		let names = pair.into_inner();
+		for arg in names {
+			args.push(arg.as_str())
+			// TODO: Local context on functions
+			local.variables.insert(arg.as_str(), global.variables.get(arg.as_str()))
+		}
+		pair = pairs.next().unwrap();
+	}
+
+	let mut exprs = String::new();
+	let mut ret = "";
+	for expr in pair.into_inner() {
+		if expr.as_rule() == Rule::Name {
+			ret = expr.as_str();
+		}
+		exprs += &parse_expr(expr, global);
+	}
+
+	let ret = match local.variables.get(ret) {
+		Some(r) => r,
+		None => "",
+	}
+	format!()
 }
 
 fn parse_op(mut pairs: Pairs<Rule>, global: &mut Global) -> (String, Rule) {
@@ -383,13 +420,16 @@ fn parse_rhs(rhs: Pair<Rule>, global: &mut Global) -> (String, Rule) {
         Rule::Float => rhs.as_str().replace(',', "."),
         Rule::Name => {
             let ret = rhs.as_str().into();
-            rule = *global.variables.clone().get(ret).unwrap_or_else(|| {
-                die(
-                    &format!("Variable \"{}\" not initialized in line", ret),
-                    global
-                );
-                &Rule::Err
-            });
+           	rule = match global.variables.get(ret) {
+           		Some(get) => *get,
+           		None => {
+					die(
+                    	&format!("Variable \"{}\" not initialized in line", ret),
+                    	global
+                	);
+           			Rule::Err
+           		}
+           	};
             ret.into()
         }
         Rule::Op | Rule::Cmp => {
