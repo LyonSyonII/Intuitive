@@ -119,7 +119,7 @@ THEN_CAT = _{ "llavors" }
 THEN = _{ (THEN_EN | THEN_CAT) ~ ":"? | ":" }
  
 // Atomics
-MAIN = _{ NOTHING ~ ((Err | EXPR | COMMENT | Newline)+ | Empty | Invalid) ~ NOTHING }
+MAIN = _{ NOTHING ~ ((Err | EXPR | COMMENT | Newline)+ | Empty | InvalidExpr) ~ NOTHING }
 
 Comment = { (!("(" | ")") ~ ANY)* }
 COMMENT = _{ "(" ~ Comment ~ ")" }
@@ -194,7 +194,7 @@ DivEq = ${ DIV_EQ ~ " "+ ~ Name ~ " "+ ~ DIV_BY ~ " "+ ~ RHS }
 // Compound expressions
 EXPR = _{ EXPRS ~ "." }
 EXPRS = _{ NESTED_EXPRS | SIMPLE_EXPRS }
-NESTED_EXPRS = _{ If | Else | ElseIf }
+NESTED_EXPRS = _{ If | Else | ElseIf | Function }
 SIMPLE_EXPRS = _{ Def | Assign | Print | Read | AddEq | SubEq | MulEq | DivEq | List }
 IFEXPR = _{ SIMPLE_EXPRS ~ "," }
 
@@ -208,6 +208,9 @@ If = { IF ~ Cmp ~ THEN ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
 ElseIf = { ELSEIF ~ Cmp ~ THEN ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
 Else = { ELSE ~ THEN? ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
 
+FUNC_COMM = _{ Name ~ ":" ~ WHITESPACE? ~ Newline? ~ (EXPRS ~ "," ~ WHITESPACE? ~ Newline*)* ~ (EXPRS | Name)}
+FUNC_DASH = _{ Name ~ ":" ~ WHITESPACE? ~ Newline? ~ ("-" ~ ">"? ~ WHITESPACE? ~ EXPRS ~ ","? ~Newline)* ~ "-" ~ ">"? ~ WHITESPACE? ~ (EXPRS | Name) ~ NEWLINE? }
+Function = ${ FUNC_COMM | FUNC_DASH }
 
 // Errors
 Err = { NestedIf | NotCmpIf | CmpElse | NotUpper | NotVarRead | ReadFmtStr | NotDot | EmptyStr }
@@ -217,13 +220,12 @@ NotUpper = @{ " "* ~ (!KEYWORD ~ ASCII_ALPHA_LOWER)+ ~ " "* ~ "."? }
 NotVarRead = { READ ~ !Name ~ !FmtString ~ RHS ~ (AS ~ TYPE)? }
 NotCmpIf = { (ELSEIF | IF) ~ THEN ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
 CmpElse = { ELSE ~ Cmp ~ THEN? ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
-NestedIf = { (IF | ELSEIF) ~ Cmp ~ THEN ~ NEWLINE? ~ (!(IF | ELSEIF | ELSE) ~ ANY)* ~ (IF | ELSEIF | ELSE) ~ ANY* }
+NestedIf = { (IF | ELSEIF) ~ Cmp ~ THEN ~ NEWLINE? ~ (!(IF | ELSEIF | ELSE | ".") ~ ANY)* ~ (IF | ELSEIF | ELSE) ~ (!"."~ ANY)* ~ "." }
 
 READ_FMT_STR = _{ String ~ (String | Name) ~ (String | Name) ~ ANY* | Name ~ (String | Name) ~ ANY* }
 ReadFmtStr = { READ ~ READ_FMT_STR ~ (AS ~ TYPE)? }
 
 Empty = { (!"." ~ ANY)* ~ "." }
-Invalid = { ANY* }
-
+InvalidExpr = { ANY* }
 // Control rules, unreachable normally
 NotInit = { "UNREACHABLE" }
