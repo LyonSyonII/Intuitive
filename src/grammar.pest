@@ -8,7 +8,7 @@ LINKER_EN = _{ " " ~ ("than" | "is" | "to" | "also" | "of") ~ " " }
 LINKER_CAT = _{ " " ~ ("es" | "és" | "a" | "que" | "compleix" | "també" | "tambe") ~ " " }
 LINKER = _{ LINKER_EN | LINKER_CAT | " " }
 
-KEYWORD = _{ EQUAL | EQUAL_CMP | ADD | SUB | MUL | DIV | LINKER | PRINT | IF | ELSE | ELSEIF | THEN | OR | AND | LOWER | GREATER | EQUAL_CMP | NOTEQ | PRINT | READ | IF | ELSE | ELSEIF | THEN | FUNC_CALL }
+KEYWORD = _{ EQUAL | EQUAL_CMP | ADD | SUB | MUL | DIV | LINKER | PRINT | IF | ELSE | ELSEIF | THEN | OR | AND | LOWER | GREATER | EQUAL_CMP | NOTEQ | PRINT | READ | IF | ELSE | ELSEIF | THEN | FUNC_CALL | REPEAT | TIMES | _FOREACH | IN }
 
 DEF_EN = _{ ^"define" | ^"def" }
 DEF_CAT = _{ ^"defineix" }
@@ -25,6 +25,10 @@ TO = _{ TO_EN | TO_CAT }
 BY_EN = _{ "by" }
 BY_CAT = _{ "per" }
 BY = _{ BY_EN | BY_CAT }
+
+TIMES_EN = _{ "times" }
+TIMES_CAT = _{ "cops" }
+TIMES = _{ TIMES_EN | TIMES_CAT }
 
 EQUAL_EN = _{ "equal" }
 EQUAL_CAT = _{ "igual" }
@@ -164,6 +168,25 @@ MADEOF = _{ MADEOF_EN | MADEOF_CAT }
 LIST_COMM = _{ Name ~ " "* ~ MADEOF ~ WHITESPACE? ~ TYPE ~ ":" ~ WHITESPACE? ~ Newline? ~ (RHS ~ "," ~ WHITESPACE? ~ Newline*)* ~ RHS}
 LIST_DASH = _{ Name ~ " "* ~ MADEOF ~ WHITESPACE? ~ TYPE ~ ":" ~ WHITESPACE? ~ Newline? ~ ("-" ~ ">"? ~ WHITESPACE? ~ RHS ~ Newline)* ~ "-" ~ ">"? ~ WHITESPACE? ~ RHS ~ NEWLINE? }
 
+REPEAT_EN = _{ ^"repeat" | ^"execute" | ^"exec" | ^"for" }
+REPEAT_CAT = _{ ^"repeteix" | ^"executa" | ^"per" }
+REPEAT = _{ REPEAT_EN | REPEAT_CAT }
+
+FOR_TIMES_COMM = _{ REPEAT ~ (Name | NUM) ~ TIMES ~ ":" ~ WHITESPACE? ~ Newline? ~ (SIMPLE_EXPRS ~ "," ~ WHITESPACE? ~ Newline*)* ~ SIMPLE_EXPRS }
+FOR_TIMES_DASH = _{ REPEAT ~ (Name | NUM) ~ TIMES ~ ":" ~ WHITESPACE? ~ Newline? ~ ("-" ~ ">"? ~ WHITESPACE? ~ EXPRS ~ (";")? ~ Newline)* ~ "-" ~ ">"? ~ WHITESPACE? ~ EXPRS ~ NEWLINE? }
+
+IN_EN = _{ ^"in" | ^"inside" }
+IN_CAT = _{ ^"en" | ^"dins" | ^"a" }
+IN = _{ IN_EN | IN_CAT }
+
+FOREACH_EN = _{ ^"for each" | ^"foreach" | ^"for" }
+FOREACH_CAT = _{ ^"per cada" | ^"per" }
+_FOREACH = _{ FOREACH_EN | FOREACH_CAT }
+FOREACH = _{ _FOREACH ~ Name ~ IN ~ Name }
+
+FOREACH_COMM = _{ FOREACH ~ ":" ~ WHITESPACE? ~ Newline? ~ (SIMPLE_EXPRS ~ "," ~ WHITESPACE? ~ Newline*)* ~ SIMPLE_EXPRS }
+FOREACH_DASH = _{ FOREACH ~ ":" ~ WHITESPACE? ~ Newline? ~ ("-" ~ ">"? ~ WHITESPACE? ~ EXPRS ~ (";")? ~ Newline)* ~ "-" ~ ">"? ~ WHITESPACE? ~ EXPRS ~ NEWLINE? }
+
 FUNC_COMM = _{ Name ~ Args? ~ WHITESPACE? ~ ":" ~ WHITESPACE? ~ Newline? ~ (SIMPLE_EXPRS ~ "," ~ WHITESPACE? ~ Newline*)* ~ (SIMPLE_EXPRS | Return) }
 FUNC_DASH = _{ Name ~ Args? ~ WHITESPACE? ~ ":" ~ WHITESPACE? ~ Newline? ~ ("-" ~ ">"? ~ WHITESPACE? ~ EXPRS ~ (";")? ~ Newline)* ~ "-" ~ ">"? ~ WHITESPACE? ~ (Return | EXPRS) ~ NEWLINE? }
 
@@ -200,8 +223,8 @@ DivEq = ${ DIV_EQ ~ " "+ ~ Name ~ " "+ ~ DIV_BY ~ " "+ ~ RHS }
 // Compound expressions
 EXPR = _{ EXPRS ~ "." }
 EXPRS = _{ NESTED_EXPRS | SIMPLE_EXPRS }
-NESTED_EXPRS = _{ If | Else | ElseIf | Function }
-SIMPLE_EXPRS = _{ Def | Assign | Print | Read | AddEq | SubEq | MulEq | DivEq | List | FuncCall}
+NESTED_EXPRS = _{ If | Else | ElseIf | Function | ForTimes | Foreach }
+SIMPLE_EXPRS = _{ Def | Assign | Print | Read | AddEq | SubEq | MulEq | DivEq | List | FuncCall }
 IFEXPR = _{ SIMPLE_EXPRS ~ "," }
 
 Op = !{ Add | Sub | Mul | Div | And | Or }
@@ -215,6 +238,9 @@ ElseIf = !{ ELSEIF ~ Cmp ~ THEN ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
 Else = !{ ELSE ~ THEN? ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
 
 List = ${ LIST_COMM | LIST_DASH }
+
+ForTimes = { FOR_TIMES_COMM | FOR_TIMES_DASH }
+Foreach = { FOREACH_COMM | FOREACH_DASH }
 
 Args = { (LINKER+ ~ Name)+ }
 Return = { Op | Name | VALUE | FuncCall }
