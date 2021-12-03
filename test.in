@@ -1,3 +1,5 @@
 Suma A B:
-- Print A " " B.
+- A + B.
 
+A = 5.
+Print Exec Suma 5 A.
