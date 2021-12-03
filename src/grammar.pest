@@ -198,20 +198,22 @@ NESTED_EXPRS = _{ If | Else | ElseIf | Function }
 SIMPLE_EXPRS = _{ Def | Assign | Print | Read | AddEq | SubEq | MulEq | DivEq | List }
 IFEXPR = _{ SIMPLE_EXPRS ~ "," }
 
-Op = { Add | Sub | Mul | Div | And | Or }
-Cmp = { LowEq | Lower | GreatEq | Greater | EqCmp | NotEq }
-Def = { DEF ~ Name ~ (AS ~ (TYPE | RHS))? }
+Op = !{ Add | Sub | Mul | Div | And | Or }
+Cmp = !{ LowEq | Lower | GreatEq | Greater | EqCmp | NotEq }
+Def = !{ DEF ~ Name ~ (AS ~ (TYPE | RHS))? }
 Assign = ${ Name ~ LINKER+ ~ EQUAL ~ LINKER+ ~ RHS }
-Print = { PRINT ~ PRINT_LHS+ }
-Read = { READ ~ String? ~ Name ~ (AS ~ TYPE)? }
+Print = !{ PRINT ~ PRINT_LHS+ }
+Read = !{ READ ~ String? ~ Name ~ (AS ~ TYPE)? }
 If = !{ IF ~ Cmp ~ THEN ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
 ElseIf = !{ ELSEIF ~ Cmp ~ THEN ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
 Else = !{ ELSE ~ THEN? ~ NEWLINE? ~ IFEXPR* ~ SIMPLE_EXPRS }
 
-Args = { LINKER+ ~ Name* }
-FUNC_COMM = _{ Name ~ Args? ~ ":" ~ WHITESPACE? ~ Newline? ~ (SIMPLE_EXPRS ~ "," ~ WHITESPACE? ~ Newline*)* ~ (SIMPLE_EXPRS | Name)}
-FUNC_DASH = _{ Name ~ Args? ~ ":" ~ WHITESPACE? ~ Newline? ~ ("-" ~ ">"? ~ WHITESPACE? ~ EXPRS ~ ";"? ~ Newline)* ~ "-" ~ ">"? ~ WHITESPACE? ~ (EXPRS | Name) ~ NEWLINE? }
-Function = { FUNC_COMM | FUNC_DASH }
+Args = { (LINKER+ ~ Name)+ }
+Return = { Op | Name | VALUE }
+FUNC_COMM = _{ Name ~ Args? ~ WHITESPACE? ~ ":" ~ WHITESPACE? ~ Newline? ~ (SIMPLE_EXPRS ~ "," ~ WHITESPACE? ~ Newline*)* ~ (SIMPLE_EXPRS | Return) }
+FUNC_DASH = _{ Name ~ Args? ~ WHITESPACE? ~ ":" ~ WHITESPACE? ~ Newline? ~ ("-" ~ ">"? ~ WHITESPACE? ~ EXPRS ~ ";"? ~ Newline)* ~ "-" ~ ">"? ~ WHITESPACE? ~ (EXPRS | Return) ~ NEWLINE? }
+Function = ${ FUNC_COMM | FUNC_DASH }
+
 
 // Errors
 Err = { NestInCommaFunc | NestedIf | NotCmpIf | CmpElse | NotUpper | NotVarRead | ReadFmtStr | NotDot | EmptyStr }
@@ -233,3 +235,4 @@ Invalid = { ANY* }
 
 // Control rules, unreachable normally
 NotInit = { "UNREACHABLE" }
+Inferred = { "UNREACHABLE" }
