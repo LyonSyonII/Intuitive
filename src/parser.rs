@@ -1,6 +1,3 @@
-// TODO: Add compile error for nested if
-// TODO: Find way to express loops and allow to nest one if
-
 #![allow(dead_code)]
 
 use crate::colors as color;
@@ -40,7 +37,7 @@ impl Global {
 }
 
 pub fn parse_string(inp: &str) -> String {
-    let parse = Parser::parse(Rule::MAIN, &inp);
+    let parse = Parser::parse(Rule::MAIN, inp);
     let parse = match parse {
         Ok(p) => p,
         Err(e) => die!(e.to_string()),
@@ -69,32 +66,31 @@ pub fn parse_file(file: &mut File, debug: bool) -> String {
     for expr in parse {
         out += &parse_expr(expr, &mut global)
     }
-    
+
     for var in global.variables {
         if var.1 == Rule::NotInit {
             global.errors += &format!("\nERROR: Unused variable \"{}\".\n       All variables must be used, remove the ones you don't want.", var.0)
         }
     }
-    
+
     if !global.errors.is_empty() {
         die!("{}", global.errors);
-    }
-    else if debug {
+    } else if debug {
         println!("{}", global.errors);
     }
-    
+
     let out = out + "}" + include_str!("std.txt");
-    rustfmt_wrapper::rustfmt(&out).unwrap_or(out)//.die(&format!("{}Output cannot be compiled, please post an issue to https://github.com/LyonSyonII/Intuitive with your code file.{}", color::RED_BOLD, color::DEFAULT))
+    rustfmt_wrapper::rustfmt(&out).unwrap_or(out) //.die(&format!("{}Output cannot be compiled, please post an issue to https://github.com/LyonSyonII/Intuitive with your code file.{}", color::RED_BOLD, color::DEFAULT))
 }
 
 fn die(err: &str, global: &mut Global) -> String {
     global.errors += &format!(
-        "\n{}ERROR:   {} {}.{}\nContext: {}.{}\n", 
-        color::RED_BOLD, 
-        err, 
-        global.line_num, 
-        color::BOLD, 
-        global.line_str.replace('\n', "\n         "), 
+        "\n{}ERROR:   {} {}.{}\nContext: {}.{}\n",
+        color::RED_BOLD,
+        err,
+        global.line_num,
+        color::BOLD,
+        global.line_str.replace('\n', "\n         "),
         color::DEFAULT
     );
 
@@ -112,7 +108,7 @@ fn die_corr(err: &str, corr: &str, global: &mut Global) -> String {
         global.line_str.replace('\n', "\n         "),
         color::DEFAULT
     );
-    
+
     String::new()
 }
 
@@ -134,11 +130,11 @@ fn check_errors(expr: Pair<Rule>, global: &mut Global) -> String {
 }
 
 fn parse_expr(expr: Pair<Rule>, global: &mut Global) -> String {
-    if global.debug { 
-        println!("{:?}", global); 
+    if global.debug {
+        println!("{:?}", global);
         println!("Expr: {:?}\n\n", expr.as_rule());
     }
-    
+
     global.line_str = expr.as_str().into();
     let rule = expr.as_rule();
     let ret = match rule {
@@ -163,14 +159,17 @@ fn parse_expr(expr: Pair<Rule>, global: &mut Global) -> String {
         Rule::Function => parse_func(expr.into_inner(), global),
         Rule::Return => parse_rhs(expr.into_inner().next().unwrap(), global).0,
         Rule::FuncCall => parse_call(expr.into_inner(), global),
+        Rule::ForTimes => parse_for(expr.into_inner(), global),
+        Rule::Foreach => parse_foreach(expr.into_inner(), global),
+        Rule::While => parse_while(expr.into_inner(), global),
         _ => String::new(),
     };
-    
+
     match rule {
-        Rule::Newline | Rule::Comment => {},
+        Rule::Newline | Rule::Comment => {}
         _ => global.last_expr = rule,
     }
-    
+
     ret
 }
 
@@ -185,13 +184,11 @@ fn parse_def(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
         if is_type(rhs.as_rule()) {
             global.variables.insert(name.into(), type_to_rule(rule));
             format!("let mut {}: {};", name, type_to_str(rule))
-        }
-        else {
+        } else {
             let (rhs, rule) = parse_rhs(rhs, global);
             global.variables.insert(name.into(), rule);
             format!("let mut {} = {};", name, rhs)
         }
-        
     } else {
         global.variables.insert(name.into(), Rule::NotInit);
         format!("let mut {};", name)
@@ -201,14 +198,14 @@ fn parse_def(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
 fn parse_assig(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
     let name = pairs.next().unwrap().as_str();
     let (rhs, rule) = parse_rhs(pairs.next().unwrap(), global);
-    
+
     // Canged rule == *ty by is_same_type()
     let decl = if let Some(ty) = global.variables.get(name) {
         is_same_type(rule, *ty) || rule == Rule::NotInit
     } else {
         false
     };
-    
+
     if decl {
         format!("{} = {};", name, rhs)
     } else {
@@ -249,10 +246,7 @@ fn parse_read(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
         format!("let {} = read::<{}>({});", name, type_to_str(rule), message)
     } else {
         if global.variables.get(name).is_none() {
-            die(
-                "Trying to Read into non declared variable in line",
-                global
-            );
+            die("Trying to Read into non declared variable in line", global);
         }
 
         format!("{} = read({});", name, message)
@@ -263,7 +257,11 @@ fn parse_if(rule: Rule, mut pairs: Pairs<Rule>, global: &mut Global) -> String {
     let mut lhs = String::new();
     if rule != Rule::If {
         if global.last_expr != Rule::If && global.last_expr != Rule::ElseIf {
-            die_corr("Orphan Else statement in line", "Else and Else If statements must always follow an initial If.", global);
+            die_corr(
+                "Orphan Else statement in line",
+                "Else and Else If statements must always follow an initial If.",
+                global,
+            );
         }
         lhs += "else ";
     }
@@ -323,7 +321,7 @@ fn parse_list(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
                     rule, ty
                 ),
                 "Lists can only contain elements of the same type.",
-                global
+                global,
             );
         }
 
@@ -335,65 +333,123 @@ fn parse_list(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
 }
 
 fn parse_add_list(name: &str, lhs: Pair<Rule>, global: &mut Global) -> String {
-		let list = global.variables.get(name);
-        if list.is_some() {
-        	let list = *list.unwrap();
-            if is_type(list) {
-                let (mut lhs, ty) = parse_rhs(lhs, global);
-                let list = type_to_rule(list);
-                if !is_same_type(ty, list) {
-                    let err = format!("Trying to add element of type {:?} to List of type {:?} in line", ty, list);
-                    die_corr(&err, "Lists can only contain elements of the same type.", global);
-                }
-                if ty == Rule::String { lhs += ".into()" }
-                format!("{}.push({});", name, lhs) 
+    let list = global.variables.get(name);
+    if list.is_some() {
+        let list = *list.unwrap();
+        if is_type(list) {
+            let (mut lhs, ty) = parse_rhs(lhs, global);
+            let list = type_to_rule(list);
+            if !is_same_type(ty, list) {
+                let err = format!(
+                    "Trying to add element of type {:?} to List of type {:?} in line",
+                    ty, list
+                );
+                die_corr(
+                    &err,
+                    "Lists can only contain elements of the same type.",
+                    global,
+                );
             }
-            else { String::new() }
-        }
-        else {
+            if ty == Rule::String {
+                lhs += ".into()"
+            }
+            format!("{}.push({});", name, lhs)
+        } else {
             String::new()
         }
+    } else {
+        String::new()
+    }
 }
 
 fn parse_func(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
     // Create local scope
-	let mut local = Global::new();
-	
+    let mut local = Global::new();
+
     // Get fn name
-	let name = pairs.next().unwrap();
+    let name = pairs.next().unwrap();
     global.functions.insert(name.as_str().into());
     local.functions = global.functions.clone();
     local.debug = global.debug;
 
     // Check if fn has args and get them
-	let mut args = String::new();
-	let pair = pairs.next().unwrap();
-	if pair.as_rule() == Rule::Args {
-		for arg in pair.into_inner() {
-            args += &format!("{}, ", arg.as_str());
-			// Add args to local scope
+    let mut args = String::new();
+    let pair = pairs.next().unwrap();
+    if pair.as_rule() == Rule::Args {
+        for arg in pair.into_inner() {
+            args += &format!("mut {}, ", arg.as_str());
+            // Add args to local scope
             local.variables.insert(arg.as_str().into(), Rule::Inferred);
-		}
-		pairs.next().unwrap();
-	}
+        }
+        pairs.next().unwrap();
+    }
 
-	let mut exprs = String::new();
-	for expr in pairs {
-		exprs += &parse_expr(expr, &mut local);
-	}
+    let mut exprs = String::new();
+    for expr in pairs {
+        exprs += &parse_expr(expr, &mut local);
+    }
 
-	format!("let {} = |{}| {{{}}};", name.as_str(), args, exprs)
+    format!("let {} = |{}| {{{}}};", name.as_str(), args, exprs)
 }
 
 fn parse_call(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
     // TODO: Function does not exist (check global.functions)
     let name = pairs.next().unwrap().as_str();
     let args = pairs
-                    .into_iter()
-                    .map(|pair| parse_rhs(pair, global).0)
-                    .collect::<Vec<String>>()
-                    .join(", ");
+        .into_iter()
+        .map(|pair| parse_rhs(pair, global).0)
+        .collect::<Vec<String>>()
+        .join(", ");
     format!("{}({});", name, args)
+}
+
+fn parse_for(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
+    let times = pairs.next().unwrap().as_str();
+    let mut exprs = String::new();
+    for pair in pairs {
+        exprs += &parse_expr(pair, global);
+    }
+
+    format!("for _ in 0..{} {{{}}}", times, exprs)
+}
+
+fn parse_foreach(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
+    let item = pairs.next().unwrap().as_str();
+    let list = pairs.next().unwrap().as_str();
+
+    let rule = global.variables.get(list);
+    if rule.is_some() {
+        let rule = *rule.unwrap();
+        global.variables.insert(item.into(), type_to_rule(rule));
+    } else {
+        die(&format!("Not initialized list {} in line", list), global);
+    }
+
+    let mut exprs = String::new();
+    for pair in pairs {
+        exprs += &parse_expr(pair, global);
+    }
+
+    global.variables.remove(item);
+
+    format!("for {} in {} {{{}}}", item, list, exprs)
+}
+
+fn parse_while(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
+    let cmp = pairs.next().unwrap();
+    let cmp = if cmp.as_rule() != Rule::Cmp {
+        die("Invalid comparation in While in line", global);
+        String::new()
+    } else {
+        parse_rhs(cmp, global).0
+    };
+
+    let mut exprs = String::new();
+    for pair in pairs {
+        exprs += &parse_expr(pair, global);
+    }
+
+    format!("while {} {{{}}}", cmp, exprs)
 }
 
 fn parse_op(mut pairs: Pairs<Rule>, global: &mut Global) -> (String, Rule) {
@@ -435,24 +491,30 @@ fn parse_op(mut pairs: Pairs<Rule>, global: &mut Global) -> (String, Rule) {
 fn parse_rhs(rhs: Pair<Rule>, global: &mut Global) -> (String, Rule) {
     let mut rule = rhs.as_rule();
     let rhs = match rule {
-        Rule::Newline => { global.line_num += 1; String::new() }
-        Rule::FuncCall => parse_call(rhs.into_inner(), global).trim_end_matches(';').into(),
+        Rule::Newline => {
+            global.line_num += 1;
+            String::new()
+        }
+        Rule::FuncCall => parse_call(rhs.into_inner(), global)
+            .trim_end_matches(';')
+            .into(),
+        Rule::Return => parse_rhs(rhs.into_inner().next().unwrap(), global).0,
         Rule::String | Rule::Inferred => rhs.as_str().into(),
         Rule::FmtString => parse_fmt_string(rhs.into_inner(), global),
         Rule::Int => rhs.as_str().to_owned() + ".0",
         Rule::Float => rhs.as_str().replace(',', "."),
         Rule::Name => {
             let ret = rhs.as_str().to_owned();
-           	rule = match global.variables.get(&ret) {
-           		Some(get) => *get,
-           		None => {
-					die(
-                    	&format!("Variable \"{}\" not initialized in line", ret),
-                    	global
-                	);
-           			Rule::Err
-           		}
-           	};
+            rule = match global.variables.get(&ret) {
+                Some(get) => *get,
+                None => {
+                    die(
+                        &format!("Variable \"{}\" not initialized in line", ret),
+                        global,
+                    );
+                    Rule::Err
+                }
+            };
             ret
         }
         Rule::Op | Rule::Cmp => {
@@ -471,15 +533,16 @@ fn parse_fmt_string(pairs: Pairs<Rule>, global: &mut Global) -> String {
     let mut rhs = String::new();
     for pair in pairs {
         let rule = pair.as_rule();
-        if rule == Rule::Name { 
+        if rule == Rule::Name {
             if let Some(var) = global.variables.get(pair.as_str()) {
                 if is_type(*var) {
-                    lhs += "{:?}" 
+                    lhs += "{:?}"
                 }
             }
+        } else {
+            lhs += "{}"
         }
-        else { lhs += "{}" }
-    
+
         let expr = if rule == Rule::Op {
             parse_op(pair.into_inner(), global).0
         } else {
@@ -487,7 +550,7 @@ fn parse_fmt_string(pairs: Pairs<Rule>, global: &mut Global) -> String {
         };
         rhs += &format!(", {}", expr);
     }
-    
+
     format!("{}\"{})", lhs, rhs)
 }
 
@@ -525,8 +588,8 @@ fn is_int(rule1: Rule, rule2: Rule) -> bool {
 }
 
 fn is_type(rule: Rule) -> bool {
-    match rule {
-        Rule::TypeInt | Rule::TypeFloat | Rule::TypeStr | Rule::Err | Rule::NotUpper => true,
-        _ => false,
-    }
+    matches!(
+        rule,
+        Rule::TypeInt | Rule::TypeFloat | Rule::TypeStr | Rule::Err | Rule::NotUpper
+    )
 }

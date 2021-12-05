@@ -1,5 +1,10 @@
-Suma A B:
-- A + B.
+Factorial Num: 
+-> Resultat = 1
+-> Mentre Num > 0: 
+    -> Multiplica Resultat per Num
+    -> Resta 1 a Num.
+-> Retorna Resultat.
 
-A = 5.
-Print Exec Suma 5 A.
+Resultat = Exec Factorial 5.
+Imprimeix Resultat.
+

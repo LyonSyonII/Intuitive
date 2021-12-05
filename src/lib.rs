@@ -1,5 +1,5 @@
-mod parser;
 pub mod colors;
+mod parser;
 
 #[cfg(test)]
 mod tests {
