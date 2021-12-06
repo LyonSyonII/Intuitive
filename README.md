@@ -1,11 +1,20 @@
+Intuitive is a programming language focused on being easy to learn and understand even for people that has never programmed before.  
+
+To achieve this, instructions (called [_Sentences_](#sentences)) are made to be written as close as possible to real languages (like english or spanish).  
+For example, C style `int sum = 5 + 6;` can be written as `Sum is equal to 5 plus 6.` 
+
+Also, for the experienced users, almost all Sentences have a Concise form, becoming the example above `Sum = 5 + 6.`
+
+If you want to know how the language is implemented, check the [Implementation Details](#implementation-details) section.
+
 ## Literals
+Literals are all values known at compile-time. 
+Integers are treated as Floats for simplicity. 
 | Type            | Syntax    | Example   |
 |----             |----       |----       |
 | Integers        | `NUM`     | `10`      |
-| Floats/Decimals | `NUM,NUM` |`10,5`     |
+| Floats/Decimals | `NUM,NUM` | `10,5`    |
 | Strings/Text    | `"TEXT"`  | `"Hello"` |
-
-Integers are treated as Floats for simplicity.
 
 ## Sentences
 Intuitive provides a set of basic instructions called sentences.  
@@ -26,9 +35,9 @@ Linkers are connectors that you can mix in between of phrases to increase readib
 Linkers are effectively ignored by the compiler, so they can be used anywhere.
 
 ## Variables
-All variables must start with an UPPERCASE letter. 
+All variables must start with an UPPERCASE letter.  
 This is to avoid having too much keywords, as every synonim would be a reserved keyword.  
-e.g. `Age` (instead of `age`).  
+E.g. `Age` (instead of `age`).  
 Variables should follow CamelCase formatting.
 
 # List of Sentences
@@ -47,8 +56,8 @@ Assigns a value to a variable.
  `Name = VALUE.`           | `Age = 16.`         
 
 ### **Declaration/Definition**
-Defines a variable.  
-Equivalent to assignation in most contexts, except inside If statements, where it will create a new variable only available there (for examples see If).
+Declares a variable.  
+Equivalent to [assignation](#assignation) in most contexts, except inside If statements, where it will create a new variable only available there (for examples see [If](#if)).
 
 | <div style="width:200px">Verbose</div> |    <div style="width:200px"> </div>     |
 |---                        |---                    |
