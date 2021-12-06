@@ -10,8 +10,8 @@ LINKER = _{ LINKER_EN | LINKER_CAT | " " }
 
 KEYWORD = _{ EQUAL | EQUAL_CMP | ADD | ADD_EQ | SUB | SUB_EQ | MUL | MUL_EQ | DIV | DIV_EQ | LINKER | PRINT | IF | ELSE | ELSEIF | THEN | OR | AND | LOWER | GREATER | EQUAL_CMP | NOTEQ | PRINT | READ | IF | ELSE | ELSEIF | THEN | FUNC_CALL | REPEAT | TIMES | _FOREACH | IN | WHILE | RETURN }
 
-DEF_EN = _{ ^"define" | ^"def" }
-DEF_CAT = _{ ^"defineix" }
+DEF_EN = _{ ^"define" | ^"def" | ^"declare" | ^"dec" }
+DEF_CAT = _{ ^"defineix" | ^"declara" }
 DEF = _{ DEF_EN | DEF_CAT }
 
 AS_EN = _{ "as" }
