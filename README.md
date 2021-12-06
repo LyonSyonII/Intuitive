@@ -19,7 +19,7 @@ Integers are treated as Floats for simplicity.
 ## Sentences
 Intuitive provides a set of basic instructions called sentences.  
 All sentences end with a `.`, like a normal one would.  
-e.g. `Print "Hello World!".`  
+E.g. `Print "Hello World!".`  
 A [list of all available sentences](#list-of-sentences) is available below. 
 
 ## Synonims
@@ -43,17 +43,17 @@ Variables should follow CamelCase formatting.
 # List of Sentences
 ## **Assignation**
 Assigns a value to a variable.
- 
+
 | <div style="width:200px">Verbose</div> |    <div style="width:200px"> </div>     |
 | -------------------------| ---------             |
  Syntax                    | Example               
- `Name is equal to VALUE.` | `Age is equal to 16.` 
- `Name equals VALUE.`      | `Age equals 16`     
+ `Name is equal to VALUE.` | `Age is equal to 16.`   
+ `Name equals VALUE.     ` | `Age equals 16`  
 
 | <div style="width:200px">Concise</div> |   <div style="width:200px"> </div>      |
 | -------------------------| ---------             |
    Syntax                  | Example               
- `Name = VALUE.`           | `Age = 16.`         
+ `Name = VALUE.          ` | `Age = 16.           `         
 
 ### **Declaration/Definition**
 Declares a variable.  
