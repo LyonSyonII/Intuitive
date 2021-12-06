@@ -40,33 +40,26 @@ This is to avoid having too much keywords, as every synonim would be a reserved 
 E.g. `Age` (instead of `age`).  
 Variables should follow CamelCase formatting.
 
-# List of Sentences
-## **Assignation**
+## **List of Sentences**
+### **Assignation**
 Assigns a value to a variable.
 
-| <div style="width:200px">Verbose</div> |    <div style="width:200px"> </div>     |
-| -------------------------| ---------             |
- Syntax                    | Example               
- `Name is equal to VALUE.` | `Age is equal to 16.`   
- `Name equals VALUE.     ` | `Age equals 16`  
-
-| <div style="width:200px">Concise</div> |   <div style="width:200px"> </div>      |
-| -------------------------| ---------             |
-   Syntax                  | Example               
- `Name = VALUE.          ` | `Age = 16.           `         
+| Assignation              |                       |
+| ---                      | ---                   |
+ Syntax                    | Example               |
+ `Name is equal to VALUE.` | `Age is equal to 16. `|   
+ `Name equals VALUE.     ` | `Age equals 16       `| 
+ `Name = VALUE.          ` | `Age = 16.           `|        
 
 ### **Declaration/Definition**
 Declares a variable.  
 Equivalent to [assignation](#assignation) in most contexts, except inside If statements, where it will create a new variable only available there (for examples see [If](#if)).
 
-| <div style="width:200px">Verbose</div> |    <div style="width:200px"> </div>     |
+| Declaration               |                       |
 |---                        |---                    |
 | Syntax                    | Example               |
 | `Declare Name as VALUE`   | `Declare Age as 16.`  |
 | `Define Name as VALUE.`   | `Define Age as 16.`   |
-
-| <div style="width:200px">Concise</div> |   <div style="width:200px"> </div>      |
-|---                        |-----                    
-| Syntax                    | Example               |
+| `Dec Name as VALUE`       | `Dec Age as 16.`      |
 | `Def Name as VALUE.`      | `Def Age as 16.`      |
 
