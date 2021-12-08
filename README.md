@@ -7,6 +7,41 @@ Also, for the experienced users, almost all Sentences have a Concise form, becom
 
 If you want to know how the language is implemented, check the [Implementation Details](#implementation-details) section.
 
+# Installation
+## Prerrequisites
+The transpiler is made with Rust, so its toolchain is required.
+
+### Windows
+Open an admin powershell session and run the next commands to install vs-build-tools
+```
+Invoke-WebRequest https://aka.ms/vs/16/release/vs_builtools.exe -OutFile vs_buildtools.exe
+.\vs_buildtools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.Windows10SDK --lahg en-US
+```
+Then go to the [Official Rust Page](https://www.rust-lang.org/tools/install) and download the RUSTUP-INIT.exe installer.
+
+Finally, download the last version of Intuitive from the Releases page and extract it wherever you want.
+
+### Linux & MacOS
+Just run the next command in a terminal window,
+```
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+download the last version of Intuitive from the Releases page and extract it wherever you want.
+
+# Usage
+## CLI
+Open a console and compile the file following the next syntax
+```
+intuitive INPUT OUTPUT
+```
+for example, to compile a file named "HelloWorld.iv" I would write
+```
+intuitive HelloWorld.iv HelloWorld
+```
+**Important** Do NOT write any extension on the output file, Intuitive automatically adds the correct extensions.
+
+
+# Documentation
 ## Literals
 Literals are all values known at compile-time. 
 Integers are treated as Floats for simplicity. 
@@ -250,3 +285,6 @@ Both `then` and `:` can be ommitted, but only if the other one is used.
 
 #### **Else if**
 Executes when the `if` statement right before it fails and a condition is met.
+| Syntax | Example |
+| ------ | ------- |
+|        |         |
