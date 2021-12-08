@@ -44,6 +44,15 @@ fn main() {
 
     let path = format!("{}/{}.exe", std::env::current_dir().unwrap().to_string_lossy(), out_s);
     
+    let handle = std::process::Command::new("alacritty").spawn();
+    if handle.is_err() {
+        println!("Installing terminal");
+        std::process::Command::new("cargo").args(["install", "alacritty"]).spawn().unwrap();
+    }
+    else {
+        handle.unwrap().kill().unwrap()
+    }
+
     let out = std::process::Command::new("alacritty").args(["--hold", "-e", &path])
         .output()
         .unwrap();
