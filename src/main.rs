@@ -39,7 +39,12 @@ fn main() {
         .die("Looks like you don't have Rust installed, go to https://github.com/LyonSyonII/Intuitive and follow the installation instructions.");
     std::io::stdout().write_all(&out.stdout).unwrap();
     std::io::stderr().write_all(&out.stderr).unwrap();
-    let out = std::process::Command::new(format!("alacritty --{}.exe", out_s))
+    std::io::stdout().flush().unwrap();
+    std::io::stderr().flush().unwrap();
+
+    let path = format!("{}/{}.exe", std::env::current_dir().unwrap().to_string_lossy(), out_s);
+    
+    let out = std::process::Command::new("alacritty").args(["--hold", "-e", &path])
         .output()
         .unwrap();
     std::io::stdout().write_all(&out.stdout).unwrap();
