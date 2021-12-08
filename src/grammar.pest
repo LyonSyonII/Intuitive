@@ -4,8 +4,8 @@ NOTHING = _{ WHITESPACE | "" }
 Newline = { NEWLINE }
 
 // Synonyms
-LINKER_EN = _{ " " ~ ("than" | "is" | "to" | "also") ~ " " }
-LINKER_CAT = _{ " " ~ ("es" | "és" | "a" | "que" | "compleix" | "també" | "tambe") ~ " " }
+LINKER_EN = _{ " " ~ ("than" | "is" | "to" | "also" | "by" | "has") ~ " " }
+LINKER_CAT = _{ " " ~ ("es" | "és" | "a" | "que" | "compleix" | "també" | "tambe" | "per") ~ " " }
 LINKER = _{ LINKER_EN | LINKER_CAT | " " }
 
 KEYWORD = _{ EQUAL | EQUAL_CMP | ADD | ADD_EQ | SUB | SUB_EQ | MUL | MUL_EQ | DIV | DIV_EQ | LINKER | PRINT | IF | ELSE | ELSEIF | THEN | OR | AND | LOWER | GREATER | EQUAL_CMP | NOTEQ | PRINT | READ | IF | ELSE | ELSEIF | THEN | FUNC_CALL | REPEAT | TIMES | _FOREACH | IN | WHILE | RETURN }
@@ -50,19 +50,19 @@ SUB_EQ = _{ SUB_EQ_EN | SUB_EQ_CAT }
 SUB_TO_EN = _{ "from" }
 SUB_TO = _{ TO | SUB_TO_EN}
 
-MUL_EN = _{ "times" | "multiplied by" }
-MUL_CAT = _{ "per" | "multiplicat per" }
+MUL_EN = _{ "times" | "multiplied" | "multiplied" | "mul" }
+MUL_CAT = _{ "per" | "multiplicat" }
 MUL = _{ MUL_CAT | MUL_EN | "*" }
-MUL_EQ_EN = _{ ^"multiply" }
-MUL_EQ_CAT = _{ ^"multiplica" | ^"mult" }
-MUL_EQ = _{ MUL_EQ_EN | MUL_EQ_CAT }
+MUL_EQ_EN = _{ ^"multiply" | ^"mul" }
+MUL_EQ_CAT = _{ ^"multiplica" }
+MUL_EQ = _{ MUL_EQ_CAT | MUL_EQ_EN }
 
-DIV_EN = _{ "divided by" }
+DIV_EN = _{ "divided by" | "divided" | "div" }
 DIV_CAT = _{ "entre" | "dividit entre" }
-DIV = _{ DIV_EN | DIV_CAT | "/" }
+DIV = _{ DIV_CAT | DIV_EN | "/" }
 DIV_EQ_EN = _{ ^"divide" | ^"div" }
 DIV_EQ_CAT = _{ "divideix" }
-DIV_EQ = _{ DIV_EQ_EN | DIV_EQ_CAT }
+DIV_EQ = _{ DIV_EQ_CAT | DIV_EQ_EN }
 DIV_BY_CAT = _{ "entre" }
 DIV_BY = _{ BY_EN | DIV_BY_CAT}
 
@@ -110,12 +110,12 @@ IF_EN = _{ ^"if" }
 IF_CAT = _{ ^"si" }
 IF = _{ IF_EN | IF_CAT }
 
-ELSE_EN = _{ ^"else" | ^"if none" }
-ELSE_CAT = _{ ^"si no" | ^"si cap" }
+ELSE_EN = _{ ^"else" | ^"if none" | ^"if it isn't" | ^"if not" }
+ELSE_CAT = _{ ^"si no" | ^"si cap dels anteriors" |^"si cap" }
 ELSE = _{ ELSE_EN | ELSE_CAT }
 
-ELSEIF_EN = _{ ^"else but" | ^"else if" }
-ELSEIF_CAT = _{ ^"si no pero" | ^"si no i" | ^"d'altra banda si" | "en canvi si" }
+ELSEIF_EN = _{ ^"else but" | ^"else if" | ^"if not but" | ^"if none but" | ^"if it isn't" ~ (" and" | " but") }
+ELSEIF_CAT = _{ ^"si no pero" | ^"si no i" | ^"d'altra banda si" | ^"en canvi si" }
 ELSEIF = _{ ELSEIF_EN | ELSEIF_CAT }
 
 THEN_EN = _{ "then" }
@@ -154,7 +154,7 @@ TYFLOAT_EN = _{ ^"reals" | ^"real" | ^"decimal" | ^"decimals" | ^"floats" | ^"fl
 TYFLOAT_CAT = _{ ^"flotants" | ^"flotants" | ^"numeros" | ^"números" | ^"núms" | ^"nombres"}
 TypeFloat = { TYFLOAT_EN | TYFLOAT_CAT }
 
-TYSTR_EN = _{ ^"words" | ^"word" | ^"strings" | ^"string" }
+TYSTR_EN = _{ ^"words" | ^"word" | ^"strings" | ^"string" | ^"text" }
 TYSTR_CAT = _{ ^"paraules" | ^"paraula" }
 TypeStr = { TYSTR_EN | TYSTR_CAT }
 
@@ -226,10 +226,10 @@ GreatEq = { LHS ~ GREAT_EQ ~ RHS }
 EqCmp = { LHS ~ EQUAL_CMP ~ RHS }
 NotEq = { LHS ~ NOTEQ ~ RHS }
 
-AddEq = ${ ADD_EQ ~ " "+ ~ RHS ~ " "+ ~ TO ~ " "+ ~ Name }
-SubEq = ${ SUB_EQ ~ " "+ ~ RHS ~ " "+ ~ SUB_TO ~ " "+ ~ Name }
-MulEq = ${ MUL_EQ ~ " "+ ~ Name ~ " "+ ~ BY ~ " "+ ~ RHS }
-DivEq = ${ DIV_EQ ~ " "+ ~ Name ~ " "+ ~ DIV_BY ~ " "+ ~ RHS }
+AddEq = ${ ADD_EQ ~ LINKER+ ~ RHS ~  " "+ ~ TO     ~ LINKER+ ~ Name }
+SubEq = ${ SUB_EQ ~ LINKER+ ~ RHS ~  " "+ ~ SUB_TO ~ LINKER+ ~ Name }
+MulEq = ${ MUL_EQ ~ LINKER+ ~ Name ~ " "+ ~ BY     ~ LINKER+ ~ RHS }
+DivEq = ${ DIV_EQ ~ LINKER+ ~ Name ~ " "+ ~ DIV_BY ~ LINKER+ ~ RHS }
 
 // Compound expressions
 EXPR = _{ EXPRS ~ "." }

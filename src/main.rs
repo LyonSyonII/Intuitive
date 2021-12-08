@@ -11,7 +11,7 @@ use std::path::Path;
 fn main() {
     let mut args = env::args().skip(1);
     if args.len() == 0 {
-        die!("Usage: chat INPUT OUTPUT DEBUG");
+        die!("Usage: intuitive INPUT OUTPUT DEBUG");
     }
 
     let inp = args.next().die(&format!(
@@ -33,9 +33,15 @@ fn main() {
         .die(&format!("File with name '{}' cannot be created.", out_s));
     out.write_all(parser::parse_file(&mut inp, debug).as_bytes())
         .die("Could not write to file.");
-
-    std::process::Command::new("rustc").args([out_s.clone() + ".rs", "-o".into(), out_s.clone()]).status().die("Looks like you don't have Rust installed, go to https://github.com/LyonSyonII/Intuitive and follow the installation instructions.");
-    std::process::Command::new(format!("./{}", out_s))
-        .status()
-        .die("File cannot be executed.");
+    
+    let out = std::process::Command::new("rustc").args([out_s.clone() + ".rs", "-o".into(), out_s.clone() + ".exe"])
+        .output()
+        .die("Looks like you don't have Rust installed, go to https://github.com/LyonSyonII/Intuitive and follow the installation instructions.");
+    std::io::stdout().write_all(&out.stdout).unwrap();
+    std::io::stderr().write_all(&out.stderr).unwrap();
+    let out = std::process::Command::new(format!("{}.exe", out_s))
+        .output()
+        .unwrap();
+    std::io::stdout().write_all(&out.stdout).unwrap();
+    std::io::stderr().write_all(&out.stderr).unwrap();
 }
