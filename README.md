@@ -12,14 +12,18 @@ If you want to know how the language is implemented, check the [Implementation D
 The transpiler is made with Rust, so its toolchain is required.
 
 ### Windows
-Open an admin powershell session and run the next commands to install vs-build-tools
+The easiest way to install Rust is using Chocolatey, a windows package manager.
+To install Chocolatey run this command in an Admin Powershell
 ```
-Invoke-WebRequest https://aka.ms/vs/16/release/vs_builtools.exe -OutFile vs_buildtools.exe
-.\vs_buildtools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.Windows10SDK --lahg en-US
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 ```
-Then go to the [Official Rust Page](https://www.rust-lang.org/tools/install) and download the RUSTUP-INIT.exe installer.
+Then use Chocolatey to install the Rust toolchain
+```
+choco install rust
+```
 
 Finally, download the last version of Intuitive from the Releases page and extract it wherever you want.
+If you want a GUI version, download the Intuitive-GUI package.
 
 ### Linux & MacOS
 Just run the next command in a terminal window,
@@ -27,6 +31,7 @@ Just run the next command in a terminal window,
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 download the last version of Intuitive from the Releases page and extract it wherever you want.
+If you want a GUI version, download the Intuitive-GUI package.
 
 # Usage
 ## CLI
@@ -285,6 +290,18 @@ Both `then` and `:` can be ommitted, but only if the other one is used.
 
 #### **Else if**
 Executes when the `if` statement right before it fails and a condition is met.
-| Syntax | Example |
-| ------ | ------- |
-|        |         |
+| Syntax                                                                   | Example                                                                                                                                                                                        |
+| ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <pre>If...<br>Else if CMP then:<br>- 1st<br>- 2nd<br>- etc.</pre>        | <pre>If Eggs > 0 then: Print "You have eggs".<br>Else if Eggs <= 0 then: <br>- Print "You don't have any eggs left" <br>- Print "Please, buy more eggs".</pre>                                 |
+| <pre>If...<br>Else but CMP:<br>- 1st<br>- 2nd<br>- etc.</pre>            | <pre>If Eggs <= 0 then: <br>- Print "You don't have any eggs left" <br>- Print "Please, buy more eggs".</pre>                                                                                  | 
+| <pre>If...<br>If not but CMP:<br>- 1st<br>- 2nd<br>- etc.</pre>          | <pre>If Eggs > 0: Print "You have eggs".<br>If not but Eggs <= 0: <br>- Print "You don't have any eggs left" <br>- Print "Please, buy more eggs".</pre>                                        |
+| <pre>If...<br>If it isn't and/but CMP:<br>- 1st<br>- 2nd<br>- etc.</pre> | <pre>If Eggs is larger than 0: Print "You have eggs".<br>If it isn't and Eggs is smaller or equal than 0: <br>- Print "You don't have any eggs left" <br>- Print "Please, buy more eggs".</pre> |
+
+#### **Else**
+Same as `else if`, but without a condition.
+|                                                                                                                                      Syntax | Example                                                                                                                                                     |
+| -------------------------------------------------------------------------------------------------------------------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|                                                                                  <pre>If...<br>Else then:<br>- 1st<br>- 2nd<br>- etc.</pre> | <pre>If Eggs > 0 then: Print "You have eggs".<br>Else then: <br>- Print "You don't have any eggs left" <br>- Print "Please, buy more eggs".</pre>           |
+|                                                                                     <pre>If...<br>If not:<br>- 1st<br>- 2nd<br>- etc.</pre> | <pre>If Eggs > 0: Print "You have eggs".<br>If not: <br>- Print "You don't have any eggs left" <br>- Print "Please, buy more eggs".</pre>                   |
+|                                                                                <pre>If...<br>If it isn't:<br>- 1st<br>- 2nd<br>- etc.</pre> | <pre>If Eggs is larger than 0: Print "You have eggs".<br>If it isn't: <br>- Print "You don't have any eggs left" <br>- Print "Please, buy more eggs".</pre> |
+| <pre>If...<br>Else if...<br>If none:<br>- 1st<br>- 2nd<br>- etc.</pre> | <pre>If Eggs > 1: Print "You have many eggs".<br>Else if Eggs == 1: Print "You have one egg".<br>If none:<br>- Print "You don't have any eggs left" <br>- Print "Please, buy more eggs".</pre>   |

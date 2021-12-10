@@ -41,19 +41,29 @@ fn main() {
     std::io::stderr().write_all(&out.stderr).unwrap();
     std::io::stdout().flush().unwrap();
     std::io::stderr().flush().unwrap();
-
-    let path = format!("{}/{}.exe", std::env::current_dir().unwrap().to_string_lossy(), out_s);
     
     let handle = std::process::Command::new("alacritty").spawn();
     if handle.is_err() {
         println!("Installing terminal");
-        std::process::Command::new("cargo").args(["install", "alacritty"]).spawn().unwrap();
+        std::process::Command::new("cargo")
+        .current_dir(std::env::current_dir().unwrap())
+        .args(["install", "alacritty"])
+        .spawn().unwrap();
     }
     else {
         handle.unwrap().kill().unwrap()
     }
+    
+    let arg = if cfg!(windows) {
+        format!("{}.exe", out_s)
+    }
+    else {
+        format!("./{}.exe", out_s)
+    };
 
-    let out = std::process::Command::new("alacritty").args(["--hold", "-e", &path])
+    let out = std::process::Command::new("alacritty")
+        .current_dir(std::env::current_dir().unwrap())
+        .args(["--hold", "-e", &arg])
         .output()
         .unwrap();
     std::io::stdout().write_all(&out.stdout).unwrap();

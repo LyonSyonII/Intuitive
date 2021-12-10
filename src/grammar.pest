@@ -26,6 +26,13 @@ BY_EN = _{ "by" }
 BY_CAT = _{ "per" }
 BY = _{ BY_EN | BY_CAT }
 
+OF_EN = _{ "of" | "in" }
+OF_CAT = _{ "de" | "d'" | "a" }
+OF = _{ OF_EN | OF_CAT }
+
+ELEM_EN = _{ ^"element" | ^"elem" | ^"item" }
+ELEM = _{ ELEM_EN }
+
 TIMES_EN = _{ ^"times" }
 TIMES_CAT = _{ ^"cops" | ^"vegades" }
 TIMES = _{ TIMES_EN | TIMES_CAT }
@@ -69,8 +76,8 @@ DIV_BY = _{ BY_EN | DIV_BY_CAT}
 NUM_OPS = _{ ADD | SUB | MUL | DIV }
 
 // Or used in >= and <=
-OR_LM_EQ_EN = _{ "or" }
-OR_LM_EQ_CAT = _{ "o" }
+OR_LM_EQ_EN = _{ " or " }
+OR_LM_EQ_CAT = _{ " o " }
 OR_LM_EQ = _{ OR_LM_EQ_EN | OR_LM_EQ_CAT }
 
 LOW_EN = _{ "less" | "smaller" | "lower" }
@@ -92,7 +99,7 @@ NOTEQ_CAT = _{ ("no" ~ EQUAL_CMP_CAT) | "diferent" }
 NOTEQ = _{ NOTEQ_EN | NOTEQ_CAT | "!=" | "!==" }
 
 // Or used in logical expressions (e.g: if A > 5 OR A < 0 )
-OR = _{ OR_LM_EQ | "||" }
+OR = _{ OR_LM_EQ | " || " }
 // And used in logical expressions (e.g: if A > 5 AND A < 0)
 AND_EN = _{ "and" }
 AND_CAT = _{ "i" }
@@ -206,9 +213,9 @@ RETURN_CAT = _{ ^"retorna" | ^"torna" }
 RETURN = _{ RETURN_EN | RETURN_CAT }
 
 // Expr sides
-RHS = _{ NotUpper | Op | Cmp | STR | NUM | Name | FuncCall | Empty }
-LHS = _{ String | NUM | Name }
-PRINT_RHS = _{ NotUpper | FuncCall | Op | NUM | String | !KEYWORD ~ Name }
+RHS = _{ NotUpper | ListAcc | Op | Cmp | STR | NUM | Name | FuncCall | Empty }
+LHS = _{ ListAcc | String | NUM | Name }
+PRINT_RHS = _{ NotUpper | FuncCall | ListAcc | Op | NUM | String | !KEYWORD ~ Name }
 
 // Binary expressions
 Add = { LHS ~ LINKER* ~ ADD ~ LINKER* ~ RHS }
@@ -216,8 +223,8 @@ Sub = { LHS ~ LINKER* ~ SUB ~ LINKER* ~ RHS }
 Mul = { LHS ~ LINKER* ~ MUL ~ LINKER* ~ RHS }
 Div = { LHS ~ LINKER* ~ DIV ~ LINKER* ~ RHS }
 
-And = { LHS ~ LINKER* ~ AND ~ LINKER* ~ RHS }
-Or = { LHS ~ LINKER* ~ OR ~ LINKER* ~ RHS }
+And = @{ LHS ~ LINKER* ~ AND ~ LINKER* ~ RHS }
+Or = @{ LHS ~ (!" " ~ LINKER)* ~ OR ~ (!" " ~ LINKER)* ~ RHS }
 
 Lower = { LHS ~ LOWER ~ RHS }
 LowEq = { LHS ~ LOW_EQ ~ RHS }
@@ -241,7 +248,7 @@ IFEXPR = _{ SIMPLE_EXPRS ~ "," }
 Op = !{ Add | Sub | Mul | Div | And | Or }
 Cmp = !{ LowEq | Lower | GreatEq | Greater | EqCmp | NotEq }
 Def = !{ DEF ~ Name ~ (AS ~ (TYPE | RHS))? }
-Assign = ${ Name ~ LINKER+ ~ EQUAL ~ LINKER+ ~ RHS }
+Assign = !{ Name ~ EQUAL ~ RHS }
 Print = !{ PRINT ~ PRINT_RHS+ }
 Read = !{ READ ~ String? ~ Name ~ (AS ~ TYPE)? }
 If = !{ IF ~ Cmp ~ THEN ~ NEWLINE? ~ IFEXPR* ~ (SIMPLE_EXPRS | Return) }
@@ -249,6 +256,9 @@ ElseIf = !{ ELSEIF ~ Cmp ~ THEN ~ NEWLINE? ~ IFEXPR* ~ (Return | SIMPLE_EXPRS) }
 Else = !{ ELSE ~ THEN? ~ NEWLINE? ~ IFEXPR* ~ (Return | SIMPLE_EXPRS) }
 
 List = { LIST_COMM | LIST_DASH }
+ListAccL = { ELEM ~ (Op | NUM | Name) ~ OF? ~ Name }
+ListAccR = { Name ~ (Op | NUM | Name) }
+ListAcc = !{ ListAccL | ListAccR }
 
 ForTimes = !{ FOR_TIMES_COMM | FOR_TIMES_DASH }
 Foreach = !{ FOREACH_COMM | FOREACH_DASH }
@@ -281,4 +291,3 @@ Invalid = { ANY* }
 // Control rules, unreachable normally
 NotInit = { "UNREACHABLE" }
 Inferred = { "UNREACHABLE" }
-
