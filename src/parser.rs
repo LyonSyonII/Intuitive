@@ -332,6 +332,9 @@ fn parse_list(mut pairs: Pairs<Rule>, global: &mut Global) -> String {
     format!("let mut {} = Vec::from([{}]);", name, rhs)
 }
 
+// TODO: List Acc
+//fn parse_list_acc()
+
 fn parse_add_list(name: &str, lhs: Pair<Rule>, global: &mut Global) -> String {
     let list = global.variables.get(name);
     if list.is_some() {

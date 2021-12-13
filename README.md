@@ -305,3 +305,5 @@ Same as `else if`, but without a condition.
 |                                                                                     <pre>If...<br>If not:<br>- 1st<br>- 2nd<br>- etc.</pre> | <pre>If Eggs > 0: Print "You have eggs".<br>If not: <br>- Print "You don't have any eggs left" <br>- Print "Please, buy more eggs".</pre>                   |
 |                                                                                <pre>If...<br>If it isn't:<br>- 1st<br>- 2nd<br>- etc.</pre> | <pre>If Eggs is larger than 0: Print "You have eggs".<br>If it isn't: <br>- Print "You don't have any eggs left" <br>- Print "Please, buy more eggs".</pre> |
 | <pre>If...<br>Else if...<br>If none:<br>- 1st<br>- 2nd<br>- etc.</pre> | <pre>If Eggs > 1: Print "You have many eggs".<br>Else if Eggs == 1: Print "You have one egg".<br>If none:<br>- Print "You don't have any eggs left" <br>- Print "Please, buy more eggs".</pre>   |
+
+#### **Functions**
